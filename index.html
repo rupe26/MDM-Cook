@@ -20,6 +20,12 @@
       background-color: #f8fafc;
       min-height: 100vh;
     }
+    /* Smooth horizontal scroll for mobile */
+    .custom-scroll {
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 #f1f5f9;
+    }
     .custom-scroll::-webkit-scrollbar {
       height: 6px;
     }
@@ -28,71 +34,58 @@
       border-radius: 4px;
     }
     
-    /* Print Specific Styles - Fixes Table Cutting Off */
+    /* Print Specific Styles */
     @media print {
-      @page {
-        size: A4 landscape; /* Forces landscape orientation on A4 */
-        margin: 5mm; /* Tight margins to fit more content */
-      }
+      @page { size: A4 landscape; margin: 5mm; }
       body { background: white !important; font-size: 10pt !important; }
       .no-print { display: none !important; }
-      
-      /* Reset layout constraints for printing */
       main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
-      
-      /* Make table fit exactly to the page */
-      table { 
-        width: 100% !important; 
-        table-layout: auto !important; 
-        border-collapse: collapse !important; 
-      }
+      table { width: 100% !important; table-layout: auto !important; border-collapse: collapse !important; }
       th, td { 
-        border: 1px solid black !important; 
-        padding: 4px !important; 
-        white-space: normal !important; /* Allows text to wrap instead of cutting off */
-        word-wrap: break-word !important; 
-        font-size: 10pt !important;
+        border: 1px solid black !important; padding: 4px !important; 
+        white-space: normal !important; word-wrap: break-word !important; font-size: 10pt !important;
       }
-      th { 
-        background-color: #f1f5f9 !important; 
-        -webkit-print-color-adjust: exact; 
-        color-adjust: exact; 
-      }
-      /* Keep specific numbers from breaking if possible */
-      td:nth-child(3), td:nth-child(7), td:nth-child(8) { word-break: break-all; font-size: 9pt !important; }
+      th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
     }
   </style>
 </head>
-<body class="text-slate-800 flex flex-col justify-between">
+<body class="text-slate-800 flex flex-col justify-between overflow-x-hidden">
 
-  <!-- Header -->
+  <!-- Full Screen Loading Overlay for PDF Generation -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/80 z-[9999] hidden flex flex-col items-center justify-center backdrop-blur-sm">
+    <i data-lucide="loader-2" class="w-12 h-12 text-white animate-spin mb-4"></i>
+    <h2 class="text-white text-xl font-bold font-mukta">PDF तयार होत आहे...</h2>
+    <p class="text-slate-300 text-sm mt-2">कृपया थोडा वेळ प्रतीक्षा करा.</p>
+  </div>
+
+  <!-- Header (Mobile Optimized) -->
   <header class="bg-[#003366] text-white border-b-4 border-amber-500 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-wrap justify-between items-center gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-white rounded flex items-center justify-center font-black text-2xl text-[#003366] border-2 border-amber-500 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+      <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+        <div class="w-12 h-12 bg-white rounded flex items-center justify-center font-black text-2xl text-[#003366] border-2 border-amber-500 shadow-sm shrink-0">
           रा
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl sm:text-2xl font-bold tracking-wide">केंद्र रविवार पेठ — पोषण आहार व शाळा पोर्टल</h1>
-            <span class="bg-green-600 text-white font-bold text-[11px] px-2 py-0.5 rounded shadow-sm border border-green-700">सक्रिय</span>
+          <div class="flex flex-wrap justify-center sm:justify-start items-center gap-2">
+            <h1 class="text-lg sm:text-xl md:text-2xl font-bold tracking-wide leading-tight">केंद्र रविवार पेठ — पोषण आहार पोर्टल</h1>
+            <span class="bg-green-600 text-white font-bold text-[10px] px-2 py-0.5 rounded shadow-sm border border-green-700">सक्रिय</span>
           </div>
-          <p class="text-sm text-blue-100 font-medium opacity-90">तालुका: अंबाजोगाई • जिल्हा: बीड • जिल्हा परिषद शिक्षण विभाग</p>
+          <p class="text-xs sm:text-sm text-blue-100 font-medium opacity-90 mt-1">तालुका: अंबाजोगाई • जिल्हा: बीड • जि. प. शिक्षण विभाग</p>
         </div>
       </div>
       
       <!-- Admin Controls -->
-      <div class="flex items-center gap-3 no-print">
-        <div id="adminIndicator" class="hidden bg-red-600/20 text-red-100 border border-red-400 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5">
-          <i data-lucide="shield-check" class="w-4 h-4"></i> अॅडमिन सक्रिय
+      <div class="flex flex-wrap justify-center items-center gap-2 sm:gap-3 w-full sm:w-auto no-print">
+        <div id="adminIndicator" class="hidden bg-red-600/20 text-red-100 border border-red-400 px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1.5 w-full sm:w-auto justify-center">
+          <i data-lucide="shield-check" class="w-4 h-4"></i> अॅडमिन
         </div>
         
-        <button id="adminBtn" onclick="toggleAdminModal()" class="bg-white hover:bg-slate-100 text-[#003366] px-4 py-2 rounded font-bold text-sm flex items-center gap-1.5 border border-slate-200 shadow-sm transition-colors">
+        <button id="adminBtn" onclick="toggleAdminModal()" class="bg-white hover:bg-slate-100 text-[#003366] px-4 py-2 rounded font-bold text-sm flex items-center justify-center gap-1.5 border border-slate-200 shadow-sm transition-colors flex-1 sm:flex-none">
           <i data-lucide="lock" class="w-4 h-4"></i>
-          <span id="adminBtnText">केंद्रप्रमुख प्रवेश</span>
+          <span id="adminBtnText">प्रवेश</span>
         </button>
 
-        <button id="settingsBtn" onclick="openAdminSettings()" class="hidden bg-slate-700 hover:bg-slate-600 text-white p-2 rounded border border-slate-500 transition-colors" title="अॅडमिन सेटिंग्ज">
+        <button id="settingsBtn" onclick="openAdminSettings()" class="hidden bg-slate-700 hover:bg-slate-600 text-white p-2 rounded border border-slate-500 transition-colors shrink-0" title="अॅडमिन सेटिंग्ज">
           <i data-lucide="settings" class="w-5 h-5"></i>
         </button>
       </div>
@@ -100,21 +93,24 @@
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-[98%] mx-auto px-2 py-6 sm:px-6 flex-1 w-full space-y-6">
+  <main class="max-w-[100%] md:max-w-[98%] mx-auto px-2 sm:px-4 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
     
-    <!-- Top Filter Bar & Action Buttons -->
-    <div class="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-        <div class="relative flex-1 sm:w-80">
+    <!-- Top Filter Bar & Action Buttons (Mobile Optimized) -->
+    <div class="bg-white p-3 sm:p-4 rounded-md shadow-sm border border-slate-300 flex flex-col lg:flex-row items-center justify-between gap-4">
+      
+      <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+        <!-- Search Input -->
+        <div class="relative w-full sm:w-72 md:w-80">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-          <input type="text" id="searchInput" oninput="renderTable()" placeholder="शाळा, मदतनीस किंवा युडायस शोधा..." 
+          <input type="text" id="searchInput" oninput="renderTable()" placeholder="शाळा, मदतनीस किंवा युडायस..." 
                  class="w-full pl-9 pr-4 py-2 text-sm rounded border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors">
         </div>
         
-        <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded border border-slate-300">
+        <!-- Month and Year Selection -->
+        <div class="flex items-center justify-center gap-1 bg-slate-100 px-3 py-2 rounded border border-slate-300 w-full sm:w-auto">
           <i data-lucide="calendar" class="w-4 h-4 text-slate-600"></i>
-          <span class="text-sm font-bold text-slate-700">माहे:</span>
-          <select id="monthSelect" onchange="updatePeriod()" class="bg-transparent text-sm font-bold text-[#003366] focus:outline-none cursor-pointer">
+          <span class="text-sm font-bold text-slate-700 hidden sm:inline">माहे:</span>
+          <select id="monthSelect" onchange="updatePeriod()" class="bg-transparent text-sm font-bold text-[#003366] focus:outline-none cursor-pointer p-1">
             <option value="जानेवारी">जानेवारी</option>
             <option value="फेब्रुवारी">फेब्रुवारी</option>
             <option value="मार्च">मार्च</option>
@@ -128,7 +124,7 @@
             <option value="नोव्हेंबर">नोव्हेंबर</option>
             <option value="डिसेंबर">डिसेंबर</option>
           </select>
-          <select id="yearSelect" onchange="updatePeriod()" class="bg-transparent text-sm font-bold text-[#003366] focus:outline-none cursor-pointer border-l border-slate-300 pl-2 ml-1">
+          <select id="yearSelect" onchange="updatePeriod()" class="bg-transparent text-sm font-bold text-[#003366] focus:outline-none cursor-pointer border-l border-slate-300 pl-2">
             <option value="2025">2025</option>
             <option value="2026" selected>2026</option>
             <option value="2027">2027</option>
@@ -137,65 +133,73 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex flex-wrap items-center gap-2 no-print">
-        <button onclick="openFormModal()" id="addNewBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold items-center gap-1.5 shadow-sm transition-colors border border-blue-700">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> नवीन नोंद
+      <div class="flex flex-wrap justify-center items-center gap-2 w-full lg:w-auto no-print">
+        <button onclick="openFormModal()" id="addNewBtn" class="hidden w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-bold flex justify-center items-center gap-1.5 shadow-sm border border-blue-700">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> <span class="hidden sm:inline">नवीन नोंद</span><span class="sm:hidden">नोंद जोडा</span>
         </button>
-        <button onclick="downloadExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-green-800">
+        <button onclick="downloadExcel()" class="flex-1 sm:flex-none bg-green-700 hover:bg-green-800 text-white px-3 py-2 rounded text-sm font-bold flex justify-center items-center gap-1.5 shadow-sm border border-green-800">
           <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel
         </button>
-        <button onclick="downloadPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-red-800">
-          <i data-lucide="file-down" class="w-4 h-4"></i> PDF पत्रक
+        <button onclick="downloadPDF()" class="flex-1 sm:flex-none bg-red-700 hover:bg-red-800 text-white px-3 py-2 rounded text-sm font-bold flex justify-center items-center gap-1.5 shadow-sm border border-red-800">
+          <i data-lucide="file-down" class="w-4 h-4"></i> PDF
         </button>
-        <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-slate-800">
+        <button onclick="window.print()" class="w-full sm:w-auto bg-slate-700 hover:bg-slate-800 text-white px-3 py-2 rounded text-sm font-bold flex justify-center items-center gap-1.5 shadow-sm border border-slate-800">
           <i data-lucide="printer" class="w-4 h-4"></i> प्रिंट
         </button>
       </div>
     </div>
 
-    <!-- Summary Statistics -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
-      <div class="bg-white p-4 rounded-md border border-slate-200 border-t-4 border-t-blue-600 shadow-sm relative">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण शाळा गट</div>
-        <div class="text-2xl font-black mt-1 text-[#003366]" id="statSchools">0</div>
-        <i data-lucide="school" class="w-10 h-10 text-slate-100 absolute right-3 bottom-3"></i>
+    <!-- Summary Statistics (Mobile Optimized Grid) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 no-print">
+      <div class="bg-white p-3 sm:p-4 rounded-md border border-slate-200 border-l-4 border-l-blue-600 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण शाळा</div>
+          <div class="text-xl sm:text-2xl font-black mt-0.5 text-[#003366]" id="statSchools">0</div>
+        </div>
+        <i data-lucide="school" class="w-8 h-8 sm:w-10 sm:h-10 text-slate-200"></i>
       </div>
-      <div class="bg-white p-4 rounded-md border border-slate-200 border-t-4 border-t-purple-600 shadow-sm relative">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण स्वयंपाकी/मदतनीस</div>
-        <div class="text-2xl font-black mt-1 text-[#003366]" id="statStaff">0</div>
-        <i data-lucide="users" class="w-10 h-10 text-slate-100 absolute right-3 bottom-3"></i>
+      <div class="bg-white p-3 sm:p-4 rounded-md border border-slate-200 border-l-4 border-l-purple-600 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">मदतनीस संख्या</div>
+          <div class="text-xl sm:text-2xl font-black mt-0.5 text-[#003366]" id="statStaff">0</div>
+        </div>
+        <i data-lucide="users" class="w-8 h-8 sm:w-10 sm:h-10 text-slate-200"></i>
       </div>
-      <div class="bg-white p-4 rounded-md border border-slate-200 border-t-4 border-t-amber-500 shadow-sm relative">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण विद्यार्थी पटसंख्या</div>
-        <div class="text-2xl font-black mt-1 text-[#003366]" id="statRoll">0</div>
-        <i data-lucide="graduation-cap" class="w-10 h-10 text-slate-100 absolute right-3 bottom-3"></i>
+      <div class="bg-white p-3 sm:p-4 rounded-md border border-slate-200 border-l-4 border-l-amber-500 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण पटसंख्या</div>
+          <div class="text-xl sm:text-2xl font-black mt-0.5 text-[#003366]" id="statRoll">0</div>
+        </div>
+        <i data-lucide="graduation-cap" class="w-8 h-8 sm:w-10 sm:h-10 text-slate-200"></i>
       </div>
-      <div class="bg-white p-4 rounded-md border border-slate-200 border-t-4 border-t-green-600 shadow-sm relative">
-        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण मानधन देय रक्कम</div>
-        <div class="text-2xl font-black mt-1 text-green-700" id="statAmount">₹ 0/-</div>
-        <i data-lucide="wallet" class="w-10 h-10 text-slate-100 absolute right-3 bottom-3"></i>
+      <div class="bg-white p-3 sm:p-4 rounded-md border border-slate-200 border-l-4 border-l-green-600 shadow-sm flex items-center justify-between">
+        <div>
+          <div class="text-[11px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण देय मानधन</div>
+          <div class="text-xl sm:text-2xl font-black mt-0.5 text-green-700" id="statAmount">₹ 0/-</div>
+        </div>
+        <i data-lucide="wallet" class="w-8 h-8 sm:w-10 sm:h-10 text-slate-200"></i>
       </div>
     </div>
 
     <!-- Live Data Table -->
-    <div class="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
-      <div class="overflow-x-auto custom-scroll">
-        <table class="w-full text-left text-sm border-collapse whitespace-nowrap">
+    <div class="bg-white rounded-md shadow-sm border border-slate-300 w-full">
+      <div class="overflow-x-auto custom-scroll w-full">
+        <table class="w-full text-left text-sm border-collapse whitespace-nowrap min-w-[900px]">
           <thead>
             <tr class="bg-slate-200 text-slate-800 font-bold border-b-2 border-slate-400 uppercase text-xs tracking-wider">
-              <th class="p-3 text-center border-r border-slate-300">अ.क्र.</th>
-              <th class="p-3 border-r border-slate-300">शाळेचे नाव</th>
-              <th class="p-3 text-center border-r border-slate-300">युडायस कोड</th>
-              <th class="p-3 text-center border-r border-slate-300">पट</th>
-              <th class="p-3 border-r border-slate-300">स्वयंपाकी / मदतनीस नाव</th>
-              <th class="p-3 border-r border-slate-300">बँकेचे नाव</th>
-              <th class="p-3 border-r border-slate-300">बँक खाते क्रमांक</th>
-              <th class="p-3 text-center border-r border-slate-300">IFSC कोड</th>
-              <th class="p-3 text-center border-r border-slate-300">आरोग्य तपासणी</th>
-              <th class="p-3 text-center border-r border-slate-300">करारनामा</th>
-              <th class="p-3 text-center border-r border-slate-300">माहे</th>
-              <th class="p-3 text-right border-r border-slate-300">मानधन</th>
-              <th class="p-3 text-center admin-col hidden no-print text-red-700">क्रिया</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">अ.क्र.</th>
+              <th class="p-2 sm:p-3 border-r border-slate-300 min-w-[150px]">शाळेचे नाव</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">युडायस</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">पट</th>
+              <th class="p-2 sm:p-3 border-r border-slate-300 min-w-[150px]">स्वयंपाकी / मदतनीस नाव</th>
+              <th class="p-2 sm:p-3 border-r border-slate-300">बँकेचे नाव</th>
+              <th class="p-2 sm:p-3 border-r border-slate-300">बँक खाते क्रमांक</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">IFSC कोड</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">तपासणी</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">करार</th>
+              <th class="p-2 sm:p-3 text-center border-r border-slate-300">माहे</th>
+              <th class="p-2 sm:p-3 text-right border-r border-slate-300">मानधन</th>
+              <th class="p-2 sm:p-3 text-center admin-col hidden no-print text-red-700 sticky right-0 bg-slate-200">क्रिया</th>
             </tr>
           </thead>
           <tbody id="tableBody" class="divide-y divide-slate-200">
@@ -205,7 +209,7 @@
             <tr class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-800">
               <td colspan="11" class="p-3 text-right text-sm">एकूण मानधन देय:</td>
               <td class="p-3 text-right text-base text-green-700 font-black border-l border-slate-300" id="totalHonorarium">0/-</td>
-              <td class="admin-col hidden no-print border-l border-slate-300"></td>
+              <td class="admin-col hidden no-print border-l border-slate-300 sticky right-0 bg-slate-100"></td>
             </tr>
           </tfoot>
         </table>
@@ -214,160 +218,121 @@
   </main>
 
   <!-- Footer -->
-  <footer class="bg-white border-t border-slate-300 py-4 text-center text-sm font-medium text-slate-600 no-print">
+  <footer class="bg-white border-t border-slate-300 py-4 text-center text-xs sm:text-sm font-medium text-slate-600 no-print mt-auto">
     केंद्रप्रमुख कार्यालय, रविवार पेठ — अंबाजोगाई, बीड. <br>
-    <span class="text-xs text-slate-500">अधिकृत शालेय पोषण आहार प्रणाली (शासकीय उपयोगार्थ).</span>
+    <span class="text-[10px] sm:text-xs text-slate-500">अधिकृत शालेय पोषण आहार प्रणाली (शासकीय उपयोगार्थ).</span>
   </footer>
 
-  <!-- Admin PIN Modal -->
+  <!-- Modals (Admin PIN, Settings, Form) Remain Same Structure, Adjusting padding for mobile -->
   <div id="pinModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-md max-w-xs w-full p-6 shadow-xl border border-slate-300 text-center">
+    <div class="bg-white rounded-md max-w-xs w-full p-5 sm:p-6 shadow-xl border border-slate-300 text-center">
       <div class="w-12 h-12 bg-[#003366] text-white rounded-full flex items-center justify-center mx-auto mb-4">
         <i data-lucide="shield-check" class="w-6 h-6"></i>
       </div>
       <h3 class="text-lg font-bold text-slate-800">केंद्रप्रमुख प्रवेश</h3>
       <p class="text-xs text-slate-500 mt-1 mb-4">माहिती संपादन करण्यासाठी पिन प्रविष्ट करा</p>
-      
       <input type="password" id="adminPin" maxlength="4" placeholder="••••" 
              class="text-center tracking-widest text-3xl font-bold w-36 mx-auto block py-2 border border-slate-300 rounded mb-5 focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none">
-      
       <div class="flex gap-2">
-        <button onclick="toggleAdminModal()" class="flex-1 py-2 border border-slate-300 rounded text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">रद्द करा</button>
+        <button onclick="toggleAdminModal()" class="flex-1 py-2 border border-slate-300 rounded text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">रद्द</button>
         <button onclick="verifyPin()" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-bold transition-colors border border-blue-700">लॉगिन</button>
       </div>
     </div>
   </div>
 
-  <!-- Admin Settings Modal -->
   <div id="settingsModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded-md max-w-md w-full p-6 shadow-xl border border-slate-300">
+    <div class="bg-white rounded-md max-w-md w-full p-5 sm:p-6 shadow-xl border border-slate-300">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
         <div class="flex items-center gap-2 text-[#003366] font-bold text-lg">
           <i data-lucide="settings" class="w-5 h-5"></i> प्रणाली सेटिंग्ज
         </div>
         <button onclick="closeAdminSettings()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
-      <div class="space-y-5 text-sm">
-        <div class="bg-slate-50 p-4 rounded border border-slate-200">
-          <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-            <i data-lucide="key" class="w-4 h-4 text-slate-600"></i> पिन बदला
-          </h4>
+      <div class="space-y-4 sm:space-y-5 text-sm">
+        <div class="bg-slate-50 p-3 sm:p-4 rounded border border-slate-200">
+          <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1.5"><i data-lucide="key" class="w-4 h-4 text-slate-600"></i> पिन बदला</h4>
           <div class="flex gap-2">
-            <input type="password" id="newPinInput" maxlength="4" placeholder="नवीन ४ अंकी पिन" 
-                   class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
-            <button onclick="updatePin()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-xs font-bold transition-colors">जतन करा</button>
+            <input type="password" id="newPinInput" maxlength="4" placeholder="नवीन ४ अंकी पिन" class="flex-1 px-3 py-2 text-sm border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <button onclick="updatePin()" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded text-xs font-bold transition-colors">जतन करा</button>
           </div>
         </div>
-
-        <div class="bg-red-50 p-4 rounded border border-red-200">
-          <h4 class="font-bold text-red-800 mb-1 flex items-center gap-1.5">
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i> डेटा व्यवस्थापन (धोकादायक)
-          </h4>
-          <p class="text-xs text-red-600 mb-3">माहिती पूर्ववत करा किंवा कायमची नष्ट करा.</p>
-          
+        <div class="bg-red-50 p-3 sm:p-4 rounded border border-red-200">
+          <h4 class="font-bold text-red-800 mb-1 flex items-center gap-1.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-red-600"></i> डेटा व्यवस्थापन</h4>
+          <p class="text-[11px] sm:text-xs text-red-600 mb-3">माहिती पूर्ववत करा किंवा कायमची नष्ट करा.</p>
           <div class="flex flex-col gap-2">
-            <button onclick="resetToDefaultData()" class="w-full bg-white border border-red-400 text-red-700 hover:bg-red-100 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
-              <i data-lucide="rotate-ccw" class="w-4 h-4"></i> मूळ माहिती पूर्ववत करा (Reset Data)
-            </button>
-            <button onclick="clearAllData()" class="w-full bg-red-700 hover:bg-red-800 text-white py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
-              <i data-lucide="trash" class="w-4 h-4"></i> सर्व रेकॉर्ड्स डिलीट करा (Clear All)
-            </button>
+            <button onclick="resetToDefaultData()" class="w-full bg-white border border-red-400 text-red-700 hover:bg-red-100 py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1.5"><i data-lucide="rotate-ccw" class="w-4 h-4"></i> मूळ माहिती (Reset)</button>
+            <button onclick="clearAllData()" class="w-full bg-red-700 hover:bg-red-800 text-white py-2 rounded text-xs font-bold transition-colors flex items-center justify-center gap-1.5"><i data-lucide="trash" class="w-4 h-4"></i> सर्व डिलीट करा (Clear All)</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Form Modal -->
-  <div id="formModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-    <div class="bg-white rounded-md max-w-2xl w-full p-6 shadow-xl border border-slate-300 my-8">
-      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
-        <h3 id="formModalTitle" class="text-lg font-bold text-[#003366] flex items-center gap-2">
+  <div id="formModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center hidden p-2 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-md max-w-2xl w-full p-4 sm:p-6 shadow-xl border border-slate-300 my-4 sm:my-8 relative">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <h3 id="formModalTitle" class="text-base sm:text-lg font-bold text-[#003366] flex items-center gap-2">
           <i data-lucide="plus-circle" class="w-5 h-5"></i> नवीन नोंद जोडा
         </h3>
-        <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeFormModal()" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
-
       <form id="recordForm" onsubmit="saveRecord(event)" class="space-y-3">
         <input type="hidden" id="editRecordId">
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm">
           <div class="sm:col-span-2">
-            <label class="block font-bold text-slate-700 mb-1">शाळेचे नाव निवडा (किंवा शेवटी मॅन्युअली जोडा) <span class="text-red-500">*</span></label>
-            <select id="f_school_select" onchange="onSchoolSelectChange(this.value)" 
-                    class="w-full px-3 py-2 border border-slate-300 rounded bg-slate-50 font-medium focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
-            </select>
+            <label class="block font-bold text-slate-700 mb-1">शाळेचे नाव निवडा <span class="text-red-500">*</span></label>
+            <select id="f_school_select" onchange="onSchoolSelectChange(this.value)" class="w-full px-3 py-2 border border-slate-300 rounded bg-slate-50 font-medium focus:border-blue-600 focus:ring-1 outline-none"></select>
           </div>
-
           <div class="sm:col-span-2">
-            <label class="block font-bold text-slate-700 mb-1">शाळेचे नाव (कागदपत्राप्रमाणे) <span class="text-red-500">*</span></label>
-            <input type="text" id="f_school" required placeholder="उदा. जि. प. प्रा. शाळा वरवटी" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <label class="block font-bold text-slate-700 mb-1">शाळेचे नाव (मॅन्युअल) <span class="text-red-500">*</span></label>
+            <input type="text" id="f_school" required placeholder="उदा. जि. प. प्रा. शाळा" class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 outline-none">
           </div>
-
           <div>
             <label class="block font-bold text-slate-700 mb-1">युडायस कोड <span class="text-red-500">*</span></label>
-            <input type="text" id="f_udise" required placeholder="उदा. 27270103301" 
-                   class="w-full px-3 py-2 border border-slate-300 bg-slate-100 rounded font-mono font-bold text-slate-800 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <input type="text" id="f_udise" required class="w-full px-3 py-2 border border-slate-300 bg-slate-100 rounded font-mono font-bold outline-none">
           </div>
-
           <div>
             <label class="block font-bold text-slate-700 mb-1">पटसंख्या <span class="text-red-500">*</span></label>
-            <input type="number" id="f_roll" required min="0" placeholder="उदा. 44" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <input type="number" id="f_roll" required min="0" class="w-full px-3 py-2 border border-slate-300 rounded outline-none">
           </div>
-
           <div class="sm:col-span-2">
-            <label class="block font-bold text-slate-700 mb-1">स्वयंपाकी / मदतनीस यांचे नाव <span class="text-red-500">*</span></label>
-            <input type="text" id="f_name" required placeholder="पूर्ण नाव प्रविष्ट करा" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <label class="block font-bold text-slate-700 mb-1">स्वयंपाकी / मदतनीस नाव <span class="text-red-500">*</span></label>
+            <input type="text" id="f_name" required class="w-full px-3 py-2 border border-slate-300 rounded outline-none">
           </div>
-
           <div>
             <label class="block font-bold text-slate-700 mb-1">बँकेचे नाव <span class="text-red-500">*</span></label>
-            <input type="text" id="f_bank" required placeholder="उदा. SBI / BOI" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <input type="text" id="f_bank" required class="w-full px-3 py-2 border border-slate-300 rounded outline-none">
           </div>
-
           <div>
-            <label class="block font-bold text-slate-700 mb-1">बँक खाते क्रमांक <span class="text-red-500">*</span></label>
-            <input type="text" id="f_acc" required placeholder="खाते क्रमांक" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded font-mono focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <label class="block font-bold text-slate-700 mb-1">खाते क्रमांक <span class="text-red-500">*</span></label>
+            <input type="text" id="f_acc" required class="w-full px-3 py-2 border border-slate-300 rounded font-mono outline-none">
           </div>
-
           <div>
             <label class="block font-bold text-slate-700 mb-1">IFSC कोड <span class="text-red-500">*</span></label>
-            <input type="text" id="f_ifsc" required placeholder="उदा. SBIN0003403" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded font-mono uppercase focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <input type="text" id="f_ifsc" required class="w-full px-3 py-2 border border-slate-300 rounded font-mono uppercase outline-none">
           </div>
-          
           <div>
-            <label class="block font-bold text-slate-700 mb-1">आरोग्य तपासणी झाली आहे? <span class="text-red-500">*</span></label>
-            <select id="f_health" required class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <label class="block font-bold text-slate-700 mb-1">आरोग्य तपासणी <span class="text-red-500">*</span></label>
+            <select id="f_health" required class="w-full px-3 py-2 border border-slate-300 rounded outline-none">
               <option value="आहे">आहे</option>
               <option value="नाही">नाही</option>
             </select>
           </div>
-
           <div>
-            <label class="block font-bold text-slate-700 mb-1">करारनामा केला आहे? <span class="text-red-500">*</span></label>
-            <select id="f_contract" required class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+            <label class="block font-bold text-slate-700 mb-1">करारनामा <span class="text-red-500">*</span></label>
+            <select id="f_contract" required class="w-full px-3 py-2 border border-slate-300 rounded outline-none">
               <option value="आहे">आहे</option>
               <option value="नाही">नाही</option>
             </select>
           </div>
-
-          <div class="sm:col-span-2">
+          <div>
             <label class="block font-bold text-slate-700 mb-1">मानधन रक्कम (₹) <span class="text-red-500">*</span></label>
-            <input type="number" id="f_amount" required value="2500" 
-                   class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none font-bold text-green-700">
+            <input type="number" id="f_amount" required value="2500" class="w-full px-3 py-2 border border-slate-300 rounded outline-none font-bold text-green-700">
           </div>
         </div>
-
         <div class="flex gap-2 pt-4 border-t border-slate-200 mt-4">
-          <button type="button" onclick="closeFormModal()" class="flex-1 py-2 border border-slate-300 rounded text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">रद्द करा</button>
-          <button type="submit" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-bold transition-colors border border-blue-700">माहिती जतन करा</button>
+          <button type="button" onclick="closeFormModal()" class="flex-1 py-2.5 sm:py-2 border border-slate-300 rounded text-sm font-bold text-slate-600 hover:bg-slate-100">रद्द करा</button>
+          <button type="submit" class="flex-1 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-bold">माहिती जतन करा</button>
         </div>
       </form>
     </div>
@@ -375,28 +340,17 @@
 
   <script>
     const initialSchoolDirectory = [
-      { name: "सी.पी.एस. रविवार पेठ", udise: "27270101612" },
-      { name: "जि.प.प्रा.शा. क्र. २, अंबाजोगाई", udise: "27270101613" },
-      { name: "जि.प.प्रा.शा. साकुड (मराठी)", udise: "27270102401" },
-      { name: "जि.प.प्रा.शा. साकुड (उर्दू)", udise: "27270102404" },
-      { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. १", udise: "27270102501" },
-      { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. ३", udise: "27270102502" },
-      { name: "जि.प.प्रा.शा. भीमाई वस्ती", udise: "27270102503" },
-      { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. २", udise: "27270102601" },
-      { name: "जि.प.प्रा.शा. मांडवा पठाण", udise: "27270102701" },
-      { name: "जि.प.प्रा.शा. मांडवा तांडा", udise: "27270102801" },
-      { name: "जि.प.प्रा.शा. पोलेवाडी", udise: "27270102901" },
-      { name: "जि.प.प्रा.शा. नागझरी वसाहत", udise: "27270103001" },
-      { name: "जि.प.प्रा.शा. शेपवाडी", udise: "27270103101" },
-      { name: "जि.प.प्रा.शा. सह्याद्री नगर शेपवाडी", udise: "27270103102" },
-      { name: "जि.प.प्रा.शा. पिंपळा धायगुडा (मराठी)", udise: "27270103201" },
-      { name: "जि.प.प्रा.शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203" },
-      { name: "जि.प.प्रा.शा. वरवटी", udise: "27270103301" },
-      { name: "जि.प.प्रा.शा. उघडे वस्ती (वरवटी)", udise: "27270103303" },
-      { name: "जि.प.प्रा.शा. तलाव पाटी", udise: "27270103401" },
-      { name: "जि.प.प्रा.शा. अंबलवाडी", udise: "27270103501" },
-      { name: "जि.प.प्रा.शा. गोल्टावस्ती", udise: "27270103502" },
-      { name: "जि.प.प्रा.शा. गिरवली आपेट", udise: "27270103701" },
+      { name: "सी.पी.एस. रविवार पेठ", udise: "27270101612" }, { name: "जि.प.प्रा.शा. क्र. २, अंबाजोगाई", udise: "27270101613" },
+      { name: "जि.प.प्रा.शा. साकुड (मराठी)", udise: "27270102401" }, { name: "जि.प.प्रा.शा. साकुड (उर्दू)", udise: "27270102404" },
+      { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. १", udise: "27270102501" }, { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. ३", udise: "27270102502" },
+      { name: "जि.प.प्रा.शा. भीमाई वस्ती", udise: "27270102503" }, { name: "जि.प.प्रा.शा. काळवटी तांडा क्र. २", udise: "27270102601" },
+      { name: "जि.प.प्रा.शा. मांडवा पठाण", udise: "27270102701" }, { name: "जि.प.प्रा.शा. मांडवा तांडा", udise: "27270102801" },
+      { name: "जि.प.प्रा.शा. पोलेवाडी", udise: "27270102901" }, { name: "जि.प.प्रा.शा. नागझरी वसाहत", udise: "27270103001" },
+      { name: "जि.प.प्रा.शा. शेपवाडी", udise: "27270103101" }, { name: "जि.प.प्रा.शा. सह्याद्री नगर शेपवाडी", udise: "27270103102" },
+      { name: "जि.प.प्रा.शा. पिंपळा धायगुडा (मराठी)", udise: "27270103201" }, { name: "जि.प.प्रा.शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203" },
+      { name: "जि.प.प्रा.शा. वरवटी", udise: "27270103301" }, { name: "जि.प.प्रा.शा. उघडे वस्ती (वरवटी)", udise: "27270103303" },
+      { name: "जि.प.प्रा.शा. तलाव पाटी", udise: "27270103401" }, { name: "जि.प.प्रा.शा. अंबलवाडी", udise: "27270103501" },
+      { name: "जि.प.प्रा.शा. गोल्टावस्ती", udise: "27270103502" }, { name: "जि.प.प्रा.शा. गिरवली आपेट", udise: "27270103701" },
       { name: "जि.प.हा.स्कू. गिरवली", udise: "27270103801" }
     ];
 
@@ -439,26 +393,15 @@
     let isAdmin = false;
 
     function populateSchoolDropdown() {
-      const select = document.getElementById('f_school_select');
-      select.innerHTML = '<option value="">-- शाळा निवडा --</option>';
-      schoolDirectory.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.udise; opt.textContent = `${s.name} (${s.udise})`;
-        select.appendChild(opt);
-      });
-      const manualOpt = document.createElement('option');
-      manualOpt.value = "__MANUAL__"; manualOpt.textContent = "➕ इतर / नवीन शाळा जोडा (Manual Entry)";
-      manualOpt.className = "font-bold text-blue-700 bg-blue-50"; select.appendChild(manualOpt);
+      const select = document.getElementById('f_school_select'); select.innerHTML = '<option value="">-- शाळा निवडा --</option>';
+      schoolDirectory.forEach(s => { const opt = document.createElement('option'); opt.value = s.udise; opt.textContent = `${s.name} (${s.udise})`; select.appendChild(opt); });
+      const manualOpt = document.createElement('option'); manualOpt.value = "__MANUAL__"; manualOpt.textContent = "➕ नवीन शाळा जोडा"; select.appendChild(manualOpt);
     }
 
-    function onSchoolSelectChange(selectedVal) {
-      if (!selectedVal) return;
-      if (selectedVal === "__MANUAL__") {
-        document.getElementById('f_school').value = ''; document.getElementById('f_udise').value = ''; document.getElementById('f_school').focus();
-      } else {
-        const found = schoolDirectory.find(s => s.udise === selectedVal);
-        if (found) { document.getElementById('f_school').value = found.name; document.getElementById('f_udise').value = found.udise; }
-      }
+    function onSchoolSelectChange(v) {
+      if (!v) return;
+      if (v === "__MANUAL__") { document.getElementById('f_school').value = ''; document.getElementById('f_udise').value = ''; document.getElementById('f_school').focus(); } 
+      else { const found = schoolDirectory.find(s => s.udise === v); if (found) { document.getElementById('f_school').value = found.name; document.getElementById('f_udise').value = found.udise; } }
     }
 
     function getPeriod() { return `${document.getElementById('monthSelect').value} ${document.getElementById('yearSelect').value}`; }
@@ -466,77 +409,57 @@
 
     function toggleAdminModal() {
       if (isAdmin) {
-        isAdmin = false;
-        document.getElementById('adminBtnText').textContent = "केंद्रप्रमुख प्रवेश";
-        document.getElementById('adminIndicator').classList.add('hidden');
-        document.getElementById('settingsBtn').classList.add('hidden');
-        document.getElementById('addNewBtn').classList.add('hidden');
-        renderTable(); return;
+        isAdmin = false; document.getElementById('adminBtnText').textContent = "प्रवेश"; document.getElementById('adminIndicator').classList.add('hidden');
+        document.getElementById('settingsBtn').classList.add('hidden'); document.getElementById('addNewBtn').classList.add('hidden'); renderTable(); return;
       }
-      document.getElementById('pinModal').classList.toggle('hidden');
-      if (!document.getElementById('pinModal').classList.contains('hidden')) {
-        document.getElementById('adminPin').value = ''; document.getElementById('adminPin').focus();
-      }
+      document.getElementById('pinModal').classList.remove('hidden'); document.getElementById('adminPin').value = ''; document.getElementById('adminPin').focus();
     }
 
     function verifyPin() {
       if (document.getElementById('adminPin').value === currentAdminPin) {
-        isAdmin = true;
-        document.getElementById('adminBtnText').textContent = "लॉगआउट";
-        document.getElementById('adminIndicator').classList.remove('hidden');
-        document.getElementById('settingsBtn').classList.remove('hidden');
-        document.getElementById('addNewBtn').classList.remove('hidden');
-        document.getElementById('pinModal').classList.add('hidden');
-        renderTable();
-      } else { alert("चुकीचा पिन! कृपया बरोबर पिन प्रविष्ट करा."); }
+        isAdmin = true; document.getElementById('adminBtnText').textContent = "लॉगआउट"; document.getElementById('adminIndicator').classList.remove('hidden');
+        document.getElementById('settingsBtn').classList.remove('hidden'); document.getElementById('addNewBtn').classList.remove('hidden'); document.getElementById('pinModal').classList.add('hidden'); renderTable();
+      } else { alert("चुकीचा पिन!"); }
     }
 
     function openAdminSettings() { if(isAdmin) document.getElementById('settingsModal').classList.remove('hidden'); }
     function closeAdminSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
+    
     function updatePin() {
       const newPin = document.getElementById('newPinInput').value.trim();
-      if (newPin.length === 4 && !isNaN(newPin)) {
-        currentAdminPin = newPin; localStorage.setItem('mdm_portal_pin', newPin);
-        alert("पिन यशस्वीरित्या बदलला आहे!"); document.getElementById('newPinInput').value = ''; closeAdminSettings();
-      } else { alert("कृपया वैध ४ अंकी संख्या पिन टाका."); }
+      if (newPin.length === 4 && !isNaN(newPin)) { currentAdminPin = newPin; localStorage.setItem('mdm_portal_pin', newPin); alert("पिन बदलला आहे!"); closeAdminSettings(); } 
+      else { alert("४ अंकी पिन टाका."); }
     }
 
     function renderTable() {
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
       const currentPeriod = getPeriod();
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
+      const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
       
-      const filtered = records.filter(r => 
-        r.school.toLowerCase().includes(query) || r.udise.includes(query) || r.name.toLowerCase().includes(query)
-      );
+      const filtered = records.filter(r => r.school.toLowerCase().includes(query) || r.udise.includes(query) || r.name.toLowerCase().includes(query));
 
-      let totalRoll = 0, totalAmount = 0;
-      const uniqueSchools = new Set();
+      let totalRoll = 0, totalAmount = 0; const uniqueSchools = new Set();
 
       filtered.forEach((r, idx) => {
         totalRoll += Number(r.roll) || 0; totalAmount += Number(r.amount) || 0; uniqueSchools.add(r.udise);
-        const health = r.health || 'आहे'; const contract = r.contract || 'आहे';
-        
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition-colors";
+        const tr = document.createElement('tr'); tr.className = "hover:bg-slate-50 transition-colors";
         tr.innerHTML = `
-          <td class="p-3 text-center text-slate-600 font-medium border-r border-slate-200">${idx + 1}</td>
-          <td class="p-3 font-bold text-slate-800 border-r border-slate-200 whitespace-normal">${r.school}</td>
-          <td class="p-3 font-mono text-slate-600 text-center border-r border-slate-200">${r.udise}</td>
-          <td class="p-3 text-center font-bold text-slate-700 border-r border-slate-200">${r.roll}</td>
-          <td class="p-3 font-bold text-[#003366] border-r border-slate-200 whitespace-normal">${r.name}</td>
-          <td class="p-3 text-slate-700 border-r border-slate-200 whitespace-normal">${r.bank}</td>
-          <td class="p-3 font-mono text-slate-800 border-r border-slate-200">${r.acc}</td>
-          <td class="p-3 font-mono text-center text-slate-600 border-r border-slate-200 uppercase">${r.ifsc}</td>
-          <td class="p-3 text-center border-r border-slate-200 font-bold ${health === 'आहे' ? 'text-green-600' : 'text-red-600'}">${health}</td>
-          <td class="p-3 text-center border-r border-slate-200 font-bold ${contract === 'आहे' ? 'text-green-600' : 'text-red-600'}">${contract}</td>
-          <td class="p-3 text-center border-r border-slate-200 font-bold">${currentPeriod}</td>
-          <td class="p-3 text-right font-black text-green-700 border-r border-slate-200">₹ ${r.amount}/-</td>
-          <td class="p-3 text-center admin-col ${isAdmin ? '' : 'hidden'} no-print">
+          <td class="p-2 sm:p-3 text-center text-slate-600 font-medium border-r border-slate-200">${idx + 1}</td>
+          <td class="p-2 sm:p-3 font-bold text-slate-800 border-r border-slate-200 whitespace-normal min-w-[150px]">${r.school}</td>
+          <td class="p-2 sm:p-3 font-mono text-slate-600 text-center border-r border-slate-200">${r.udise}</td>
+          <td class="p-2 sm:p-3 text-center font-bold text-slate-700 border-r border-slate-200">${r.roll}</td>
+          <td class="p-2 sm:p-3 font-bold text-[#003366] border-r border-slate-200 whitespace-normal min-w-[150px]">${r.name}</td>
+          <td class="p-2 sm:p-3 text-slate-700 border-r border-slate-200 whitespace-normal">${r.bank}</td>
+          <td class="p-2 sm:p-3 font-mono text-slate-800 border-r border-slate-200">${r.acc}</td>
+          <td class="p-2 sm:p-3 font-mono text-center text-slate-600 border-r border-slate-200 uppercase">${r.ifsc}</td>
+          <td class="p-2 sm:p-3 text-center border-r border-slate-200 font-bold ${(r.health||'आहे')==='आहे'?'text-green-600':'text-red-600'}">${r.health||'आहे'}</td>
+          <td class="p-2 sm:p-3 text-center border-r border-slate-200 font-bold ${(r.contract||'आहे')==='आहे'?'text-green-600':'text-red-600'}">${r.contract||'आहे'}</td>
+          <td class="p-2 sm:p-3 text-center border-r border-slate-200 font-bold">${currentPeriod}</td>
+          <td class="p-2 sm:p-3 text-right font-black text-green-700 border-r border-slate-200">₹ ${r.amount}/-</td>
+          <td class="p-2 sm:p-3 text-center admin-col ${isAdmin ? '' : 'hidden'} no-print sticky right-0 bg-white border-l border-slate-200">
             <div class="flex items-center justify-center gap-2">
-              <button onclick="editRecordPrompt(${r.id})" class="text-blue-600 bg-blue-50 p-1.5 rounded" title="संपादन"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-              <button onclick="deleteRow(${r.id})" class="text-red-600 bg-red-50 p-1.5 rounded" title="डिलीट"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="editRecordPrompt(${r.id})" class="text-blue-600 bg-blue-50 p-1.5 rounded"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+              <button onclick="deleteRow(${r.id})" class="text-red-600 bg-red-50 p-1.5 rounded"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
           </td>
         `;
@@ -554,23 +477,16 @@
     function openFormModal(editData = null) {
       document.getElementById('formModal').classList.remove('hidden'); populateSchoolDropdown();
       if (editData) {
-        document.getElementById('formModalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i> माहिती संपादन करा`;
-        document.getElementById('editRecordId').value = editData.id;
-        document.getElementById('f_school_select').value = editData.udise || '__MANUAL__';
-        document.getElementById('f_school').value = editData.school;
-        document.getElementById('f_udise').value = editData.udise;
-        document.getElementById('f_roll').value = editData.roll;
-        document.getElementById('f_name').value = editData.name;
-        document.getElementById('f_bank').value = editData.bank;
-        document.getElementById('f_acc').value = editData.acc;
-        document.getElementById('f_ifsc').value = editData.ifsc;
-        document.getElementById('f_health').value = editData.health || 'आहे';
-        document.getElementById('f_contract').value = editData.contract || 'आहे';
-        document.getElementById('f_amount').value = editData.amount;
+        document.getElementById('formModalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i> संपादन करा`;
+        document.getElementById('editRecordId').value = editData.id; document.getElementById('f_school_select').value = editData.udise || '__MANUAL__';
+        document.getElementById('f_school').value = editData.school; document.getElementById('f_udise').value = editData.udise;
+        document.getElementById('f_roll').value = editData.roll; document.getElementById('f_name').value = editData.name;
+        document.getElementById('f_bank').value = editData.bank; document.getElementById('f_acc').value = editData.acc;
+        document.getElementById('f_ifsc').value = editData.ifsc; document.getElementById('f_health').value = editData.health || 'आहे';
+        document.getElementById('f_contract').value = editData.contract || 'आहे'; document.getElementById('f_amount').value = editData.amount;
       } else {
-        document.getElementById('formModalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-[#003366]"></i> नवीन नोंद जोडा`;
-        document.getElementById('recordForm').reset(); document.getElementById('editRecordId').value = '';
-        document.getElementById('f_amount').value = '2500';
+        document.getElementById('formModalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-[#003366]"></i> नवीन नोंद`;
+        document.getElementById('recordForm').reset(); document.getElementById('editRecordId').value = ''; document.getElementById('f_amount').value = '2500';
       }
     }
 
@@ -578,98 +494,62 @@
 
     function saveRecord(e) {
       e.preventDefault();
-      const id = document.getElementById('editRecordId').value;
-      const schoolName = document.getElementById('f_school').value.trim();
-      const schoolUdise = document.getElementById('f_udise').value.trim();
-
-      const exists = schoolDirectory.some(s => s.udise === schoolUdise || s.name === schoolName);
-      if (!exists && schoolName && schoolUdise) {
+      const id = document.getElementById('editRecordId').value; const schoolName = document.getElementById('f_school').value.trim(); const schoolUdise = document.getElementById('f_udise').value.trim();
+      if (!schoolDirectory.some(s => s.udise === schoolUdise || s.name === schoolName) && schoolName && schoolUdise) {
         schoolDirectory.push({ name: schoolName, udise: schoolUdise }); localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
       }
-
       const payload = {
-        id: id ? Number(id) : Date.now(),
-        school: schoolName, udise: schoolUdise, roll: Number(document.getElementById('f_roll').value),
-        name: document.getElementById('f_name').value.trim(), bank: document.getElementById('f_bank').value.trim(),
-        acc: document.getElementById('f_acc').value.trim(), ifsc: document.getElementById('f_ifsc').value.trim().toUpperCase(),
-        health: document.getElementById('f_health').value, contract: document.getElementById('f_contract').value,
-        amount: Number(document.getElementById('f_amount').value) || 2500
+        id: id ? Number(id) : Date.now(), school: schoolName, udise: schoolUdise, roll: Number(document.getElementById('f_roll').value),
+        name: document.getElementById('f_name').value.trim(), bank: document.getElementById('f_bank').value.trim(), acc: document.getElementById('f_acc').value.trim(),
+        ifsc: document.getElementById('f_ifsc').value.trim().toUpperCase(), health: document.getElementById('f_health').value, contract: document.getElementById('f_contract').value, amount: Number(document.getElementById('f_amount').value) || 2500
       };
-
-      if (id) { records = records.map(r => r.id === Number(id) ? payload : r); } 
-      else { records.unshift(payload); }
-
+      if (id) { records = records.map(r => r.id === Number(id) ? payload : r); } else { records.unshift(payload); }
       localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeFormModal(); renderTable();
     }
 
     function editRecordPrompt(id) { if (!isAdmin) return; const rec = records.find(r => r.id === id); if (rec) openFormModal(rec); }
     function deleteRow(id) {
-      if (!isAdmin) return; const item = records.find(r => r.id === id);
-      if (confirm(`तुम्हाला "${item ? item.name : 'ही नोंद'}" डिलीट करायची आहे का?`)) {
-        records = records.filter(r => r.id !== id); localStorage.setItem('mdm_portal_records', JSON.stringify(records)); renderTable();
-      }
+      if (!isAdmin) return; if (confirm(`रेकॉर्ड डिलीट करायचे आहे का?`)) { records = records.filter(r => r.id !== id); localStorage.setItem('mdm_portal_records', JSON.stringify(records)); renderTable(); }
     }
+    function resetToDefaultData() { if (!isAdmin) return; if (confirm("मूळ माहिती पूर्ववत करायची?")) { records = JSON.parse(JSON.stringify(defaultData)); localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeAdminSettings(); renderTable(); } }
+    function clearAllData() { if (!isAdmin) return; if (confirm("सर्व माहिती डिलीट करायची?")) { records = []; localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeAdminSettings(); renderTable(); } }
 
-    function resetToDefaultData() {
-      if (!isAdmin) return;
-      if (confirm("मूळ माहिती पूर्ववत करायची आहे का? नवीन केलेले सर्व बदल नष्ट होतील.")) {
-        records = JSON.parse(JSON.stringify(defaultData)); schoolDirectory = JSON.parse(JSON.stringify(initialSchoolDirectory));
-        localStorage.setItem('mdm_portal_records', JSON.stringify(records)); localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
-        closeAdminSettings(); renderTable();
-      }
-    }
-    
-    function clearAllData() {
-      if (!isAdmin) return;
-      if (confirm("सावधान! सर्व शाळा आणि कर्मचाऱ्यांची माहिती डिलीट करायची आहे का?")) {
-        records = []; localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeAdminSettings(); renderTable();
-      }
-    }
-
-    // Completely Fixed PDF Export for Sharp Fonts and Proper Column Widths
+    // Improved PDF Engine for Mobile Compatibility (Prevents Blank PDF)
     function downloadPDF() {
       const period = getPeriod();
       const totalAmt = records.reduce((s, r) => s + Number(r.amount || 0), 0);
       
-      // We append it to DOM to ensure fonts render before snapshot
+      // Show loading spinner
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+      
       const container = document.createElement('div');
-      container.id = 'pdfExportContainer';
+      // Append behind everything but keep it in flow coordinates
       container.style.position = 'absolute';
-      container.style.left = '-9999px';
       container.style.top = '0';
+      container.style.left = '0';
+      container.style.zIndex = '-9999';
+      container.style.opacity = '0.01'; // better than 0 or display:none for html2canvas
+      container.style.pointerEvents = 'none';
       
       const htmlString = `
-        <div style="padding: 20px; font-family: 'Mukta', sans-serif; color: #000; width: 1450px; background: #fff;">
+        <div style="padding: 20px; font-family: 'Mukta', sans-serif; color: #000; width: 1400px; background: #fff;">
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&display=swap');
-            
-            .pdf-container, .pdf-table th, .pdf-table td {
-                font-family: 'Mukta', Arial, sans-serif !important;
-                font-size: 17px !important; /* Adjusted so it fits properly without breaking numbers */
-            }
+            .pdf-container, .pdf-table th, .pdf-table td { font-family: 'Mukta', Arial, sans-serif !important; font-size: 18px !important; }
             .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
-            .pdf-table th, .pdf-table td { 
-                border: 1px solid #000; padding: 8px 6px; text-align: left; 
-                word-wrap: break-word; overflow-wrap: break-word;
-            }
+            .pdf-table th, .pdf-table td { border: 1px solid #000; padding: 8px 6px; text-align: left; word-wrap: break-word; overflow-wrap: break-word; }
             .pdf-table th { background-color: #e2e8f0; font-weight: 700; text-align: center; }
             .pdf-header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
             .pdf-header h1 { font-size: 26px !important; font-weight: 800; margin: 0; }
             .pdf-header p { font-size: 20px !important; font-weight: 600; margin: 6px 0 0 0; }
-            .text-center { text-align: center !important; }
-            .text-right { text-align: right !important; }
-            .font-bold { font-weight: 700 !important; }
-            
-            /* Crucial fix to prevent numbers from splitting into two lines */
+            .text-center { text-align: center !important; } .text-right { text-align: right !important; } .font-bold { font-weight: 700 !important; }
             .no-wrap { white-space: nowrap !important; }
           </style>
-          
           <div class="pdf-container">
             <div class="pdf-header">
               <h1>स्वयंपाकी / मदतनीस शालेय पोषण आहार मानधन मागणी पत्रक - ${period}</h1>
               <p>केंद्र: रविवारपेठ, ता. अंबाजोगाई, जि. बीड (सर्व शाळा एकत्रित)</p>
             </div>
-            
             <table class="pdf-table">
               <thead>
                 <tr>
@@ -681,7 +561,7 @@
                   <th style="width: 10%;">बँकेचे नाव</th>
                   <th style="width: 11%;">खाते क्रमांक</th>
                   <th style="width: 9%;">IFSC कोड</th>
-                  <th style="width: 6.5%;">आरोग्य तपासणी</th>
+                  <th style="width: 6.5%;">तपासणी</th>
                   <th style="width: 6.5%;">करारनामा</th>
                   <th style="width: 5.5%;">माहे</th>
                   <th style="width: 5%;">मानधन</th>
@@ -715,60 +595,56 @@
           </div>
         </div>
       `;
-
       container.innerHTML = htmlString;
       document.body.appendChild(container);
 
-      // Ensures browser completely loads the Mukta font before saving PDF
-      document.fonts.ready.then(() => {
-        const opt = {
-          margin: [8, 8, 8, 8],
-          filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
-          image: { type: 'jpeg', quality: 1.0 },
-          html2canvas: { 
-            scale: 3, // High scale for Sharp non-blurry fonts
-            useCORS: true, 
-            windowWidth: 1450,
-            letterRendering: false
-          },
-          jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
-        };
+      // Delay to ensure the DOM layout is calculated and fonts are fetched on mobile
+      setTimeout(() => {
+        document.fonts.ready.then(() => {
+          const opt = {
+            margin: [8, 8, 8, 8],
+            filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+              scale: 2, // 2 is optimal. Prevents canvas memory limit crash on mobiles causing blank PDF
+              useCORS: true, 
+              windowWidth: 1400,
+              scrollY: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+          };
 
-        html2pdf().set(opt).from(container).save().then(() => {
-          document.body.removeChild(container);
+          html2pdf().set(opt).from(container).save().then(() => {
+            document.body.removeChild(container);
+            document.getElementById('loadingOverlay').classList.add('hidden');
+          }).catch(err => {
+            console.error("PDF Error:", err);
+            document.body.removeChild(container);
+            document.getElementById('loadingOverlay').classList.add('hidden');
+            alert("PDF तयार करताना अडचण आली. कृपया पुन्हा प्रयत्न करा.");
+          });
         });
-      });
+      }, 800);
     }
 
-    // Excel Export
     function downloadExcel() {
       const period = getPeriod();
       const excelRows = [
         ["स्वयंपाकी / मदतनीस शालेय पोषण आहार मानधन मागणी पत्रक"],
-        [`केंद्र: रविवारपेठ, ता. अंबाजोगाई, जि. बीड (माहे: ${period})`],
-        [],
+        [`केंद्र: रविवारपेठ, ता. अंबाजोगाई, जि. बीड (माहे: ${period})`], [],
         ["अ.क्र.", "शाळेचे नाव", "युडायस कोड", "पटसंख्या", "स्वयंपाकी / मदतनीस नाव", "बँकेचे नाव", "बँक खाते क्रमांक", "IFSC कोड", "आरोग्य तपासणी", "करारनामा", "माहे", "मानधन (₹)"]
       ];
-
       records.forEach((r, idx) => {
-        excelRows.push([
-          idx + 1, r.school, r.udise, r.roll, r.name, r.bank, r.acc, r.ifsc, 
-          r.health || 'आहे', r.contract || 'आहे', period, r.amount
-        ]);
+        excelRows.push([idx + 1, r.school, r.udise, r.roll, r.name, r.bank, r.acc, r.ifsc, r.health || 'आहे', r.contract || 'आहे', period, r.amount]);
       });
-
-      const totalAmt = records.reduce((s, r) => s + Number(r.amount || 0), 0);
-      excelRows.push(["", "", "", "", "", "", "", "", "", "", "एकूण मानधन:", totalAmt]);
-
+      excelRows.push(["", "", "", "", "", "", "", "", "", "", "एकूण मानधन:", records.reduce((s, r) => s + Number(r.amount || 0), 0)]);
       const ws = XLSX.utils.aoa_to_sheet(excelRows);
-      ws['!cols'] = [{wch: 6}, {wch: 32}, {wch: 14}, {wch: 8}, {wch: 28}, {wch: 16}, {wch: 20}, {wch: 14}, {wch: 14}, {wch: 12}, {wch: 12}, {wch: 12}];
+      ws['!cols'] = [{wch:6}, {wch:32}, {wch:14}, {wch:8}, {wch:28}, {wch:16}, {wch:20}, {wch:14}, {wch:14}, {wch:12}, {wch:12}, {wch:12}];
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "MDM Report");
       XLSX.writeFile(wb, `MDM_Demand_${period.replace(/\s+/g, '_')}.xlsx`);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      populateSchoolDropdown(); updatePeriod(); lucide.createIcons();
-    });
+    window.addEventListener('DOMContentLoaded', () => { populateSchoolDropdown(); updatePeriod(); lucide.createIcons(); });
   </script>
 </body>
 </html>

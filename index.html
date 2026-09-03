@@ -17,7 +17,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&display=swap');
     body {
       font-family: 'Mukta', sans-serif;
-      background-color: #f8fafc; /* Official light grey background */
+      background-color: #f8fafc;
       min-height: 100vh;
     }
     .custom-scroll::-webkit-scrollbar {
@@ -27,23 +27,45 @@
       background-color: #94a3b8;
       border-radius: 4px;
     }
-    /* Print Specific Styles */
+    
+    /* Print Specific Styles - Fixes Table Cutting Off */
     @media print {
       @page {
-        size: landscape; /* Forces default landscape orientation */
-        margin: 10mm;
+        size: A4 landscape; /* Forces landscape orientation on A4 */
+        margin: 5mm; /* Tight margins to fit more content */
       }
+      body { background: white !important; font-size: 10pt !important; }
       .no-print { display: none !important; }
-      body { background: white !important; font-size: 11px; }
-      table { border-collapse: collapse; width: 100%; border: 1px solid black !important; }
-      th, td { border: 1px solid black !important; padding: 6px !important; text-align: left; }
-      th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
+      
+      /* Reset layout constraints for printing */
+      main { max-width: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+      
+      /* Make table fit exactly to the page */
+      table { 
+        width: 100% !important; 
+        table-layout: auto !important; 
+        border-collapse: collapse !important; 
+      }
+      th, td { 
+        border: 1px solid black !important; 
+        padding: 4px !important; 
+        white-space: normal !important; /* Allows text to wrap instead of cutting off */
+        word-wrap: break-word !important; 
+        font-size: 10pt !important;
+      }
+      th { 
+        background-color: #f1f5f9 !important; 
+        -webkit-print-color-adjust: exact; 
+        color-adjust: exact; 
+      }
+      /* Keep specific numbers from breaking if possible */
+      td:nth-child(3), td:nth-child(7), td:nth-child(8) { word-break: break-all; font-size: 9pt !important; }
     }
   </style>
 </head>
 <body class="text-slate-800 flex flex-col justify-between">
 
-  <!-- Header (Official Navy Blue) -->
+  <!-- Header -->
   <header class="bg-[#003366] text-white border-b-4 border-amber-500 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-wrap justify-between items-center gap-4">
       <div class="flex items-center gap-4">
@@ -78,19 +100,17 @@
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-[95%] mx-auto px-4 py-6 sm:px-6 flex-1 w-full space-y-6">
+  <main class="max-w-[98%] mx-auto px-2 py-6 sm:px-6 flex-1 w-full space-y-6">
     
     <!-- Top Filter Bar & Action Buttons -->
     <div class="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex flex-wrap items-center justify-between gap-4">
       <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-        <!-- Search Input -->
         <div class="relative flex-1 sm:w-80">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
           <input type="text" id="searchInput" oninput="renderTable()" placeholder="शाळा, मदतनीस किंवा युडायस शोधा..." 
                  class="w-full pl-9 pr-4 py-2 text-sm rounded border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors">
         </div>
         
-        <!-- Month and Year Selection -->
         <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded border border-slate-300">
           <i data-lucide="calendar" class="w-4 h-4 text-slate-600"></i>
           <span class="text-sm font-bold text-slate-700">माहे:</span>
@@ -122,7 +142,7 @@
           <i data-lucide="plus-circle" class="w-4 h-4"></i> नवीन नोंद
         </button>
         <button onclick="downloadExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-green-800">
-          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel डाउनलोड
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel
         </button>
         <button onclick="downloadPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-red-800">
           <i data-lucide="file-down" class="w-4 h-4"></i> PDF पत्रक
@@ -322,7 +342,6 @@
                    class="w-full px-3 py-2 border border-slate-300 rounded font-mono uppercase focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
           </div>
           
-          <!-- New fields -->
           <div>
             <label class="block font-bold text-slate-700 mb-1">आरोग्य तपासणी झाली आहे? <span class="text-red-500">*</span></label>
             <select id="f_health" required class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
@@ -381,8 +400,6 @@
       { name: "जि.प.हा.स्कू. गिरवली", udise: "27270103801" }
     ];
 
-    let schoolDirectory = JSON.parse(localStorage.getItem('mdm_school_directory')) || initialSchoolDirectory;
-
     const defaultData = [
       { id: 1, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चाटे सुंदराबाई दोंडीबा", bank: "SBI", acc: "34734735906", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
       { id: 2, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चोरे जयश्री सिध्देश्वर", bank: "SBI", acc: "38701103558", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
@@ -416,6 +433,7 @@
       { id: 30, school: "जि. प. प्रा. शा. नागझरी वसाहत", udise: "27270103001", roll: 34, name: "डावरे श्वेता उत्तरेश्वर", bank: "SBI", acc: "32460199966", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 }
     ];
 
+    let schoolDirectory = JSON.parse(localStorage.getItem('mdm_school_directory')) || initialSchoolDirectory;
     let records = JSON.parse(localStorage.getItem('mdm_portal_records')) || defaultData;
     let currentAdminPin = localStorage.getItem('mdm_portal_pin') || "1234";
     let isAdmin = false;
@@ -504,11 +522,11 @@
         tr.className = "hover:bg-slate-50 transition-colors";
         tr.innerHTML = `
           <td class="p-3 text-center text-slate-600 font-medium border-r border-slate-200">${idx + 1}</td>
-          <td class="p-3 font-bold text-slate-800 border-r border-slate-200">${r.school}</td>
+          <td class="p-3 font-bold text-slate-800 border-r border-slate-200 whitespace-normal">${r.school}</td>
           <td class="p-3 font-mono text-slate-600 text-center border-r border-slate-200">${r.udise}</td>
           <td class="p-3 text-center font-bold text-slate-700 border-r border-slate-200">${r.roll}</td>
-          <td class="p-3 font-bold text-[#003366] border-r border-slate-200">${r.name}</td>
-          <td class="p-3 text-slate-700 border-r border-slate-200">${r.bank}</td>
+          <td class="p-3 font-bold text-[#003366] border-r border-slate-200 whitespace-normal">${r.name}</td>
+          <td class="p-3 text-slate-700 border-r border-slate-200 whitespace-normal">${r.bank}</td>
           <td class="p-3 font-mono text-slate-800 border-r border-slate-200">${r.acc}</td>
           <td class="p-3 font-mono text-center text-slate-600 border-r border-slate-200 uppercase">${r.ifsc}</td>
           <td class="p-3 text-center border-r border-slate-200 font-bold ${health === 'आहे' ? 'text-green-600' : 'text-red-600'}">${health}</td>
@@ -600,6 +618,7 @@
         closeAdminSettings(); renderTable();
       }
     }
+    
     function clearAllData() {
       if (!isAdmin) return;
       if (confirm("सावधान! सर्व शाळा आणि कर्मचाऱ्यांची माहिती डिलीट करायची आहे का?")) {
@@ -607,22 +626,30 @@
       }
     }
 
-    // Completely Refactored, Bug-Free PDF Exporter
+    // Completely Fixed PDF Export for Sharp Fonts and Proper Column Widths
     function downloadPDF() {
       const period = getPeriod();
       const totalAmt = records.reduce((s, r) => s + Number(r.amount || 0), 0);
       
-      // Creating the HTML string directly to avoid DOM manipulation bugs
+      // We append it to DOM to ensure fonts render before snapshot
+      const container = document.createElement('div');
+      container.id = 'pdfExportContainer';
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      
       const htmlString = `
         <div style="padding: 20px; font-family: 'Mukta', sans-serif; color: #000; width: 1450px; background: #fff;">
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&display=swap');
+            
             .pdf-container, .pdf-table th, .pdf-table td {
-                font-family: 'Mukta', sans-serif !important;
-                font-size: 20px !important;
+                font-family: 'Mukta', Arial, sans-serif !important;
+                font-size: 17px !important; /* Adjusted so it fits properly without breaking numbers */
             }
-            .pdf-table { width: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: fixed; }
+            .pdf-table { width: 100%; border-collapse: collapse; border: 1px solid #000; table-layout: fixed; }
             .pdf-table th, .pdf-table td { 
-                border: 2px solid #000; padding: 10px 8px; text-align: left; 
+                border: 1px solid #000; padding: 8px 6px; text-align: left; 
                 word-wrap: break-word; overflow-wrap: break-word;
             }
             .pdf-table th { background-color: #e2e8f0; font-weight: 700; text-align: center; }
@@ -632,6 +659,9 @@
             .text-center { text-align: center !important; }
             .text-right { text-align: right !important; }
             .font-bold { font-weight: 700 !important; }
+            
+            /* Crucial fix to prevent numbers from splitting into two lines */
+            .no-wrap { white-space: nowrap !important; }
           </style>
           
           <div class="pdf-container">
@@ -644,17 +674,17 @@
               <thead>
                 <tr>
                   <th style="width: 3.5%;">अ.क्र.</th>
-                  <th style="width: 14%;">शाळेचे नाव</th>
+                  <th style="width: 15%;">शाळेचे नाव</th>
                   <th style="width: 9%;">युडायस</th>
                   <th style="width: 4%;">पट</th>
                   <th style="width: 15%;">स्वयंपाकी / मदतनीस नाव</th>
-                  <th style="width: 9%;">बँकेचे नाव</th>
-                  <th style="width: 13%;">खाते क्रमांक</th>
+                  <th style="width: 10%;">बँकेचे नाव</th>
+                  <th style="width: 11%;">खाते क्रमांक</th>
                   <th style="width: 9%;">IFSC कोड</th>
                   <th style="width: 6.5%;">आरोग्य तपासणी</th>
                   <th style="width: 6.5%;">करारनामा</th>
-                  <th style="width: 5%;">माहे</th>
-                  <th style="width: 5.5%;">मानधन</th>
+                  <th style="width: 5.5%;">माहे</th>
+                  <th style="width: 5%;">मानधन</th>
                 </tr>
               </thead>
               <tbody>
@@ -662,12 +692,12 @@
                   <tr style="page-break-inside: avoid;">
                     <td class="text-center">${i + 1}</td>
                     <td class="font-bold">${r.school}</td>
-                    <td class="text-center">${r.udise}</td>
+                    <td class="text-center no-wrap">${r.udise}</td>
                     <td class="text-center font-bold">${r.roll}</td>
                     <td class="font-bold">${r.name}</td>
                     <td>${r.bank}</td>
-                    <td>${r.acc}</td>
-                    <td class="text-center">${r.ifsc}</td>
+                    <td class="no-wrap">${r.acc}</td>
+                    <td class="text-center no-wrap">${r.ifsc}</td>
                     <td class="text-center font-bold">${r.health || 'आहे'}</td>
                     <td class="text-center font-bold">${r.contract || 'आहे'}</td>
                     <td class="text-center">${period}</td>
@@ -686,22 +716,31 @@
         </div>
       `;
 
-      const element = document.createElement('div');
-      element.innerHTML = htmlString;
-      
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 1450, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
-      };
+      container.innerHTML = htmlString;
+      document.body.appendChild(container);
 
-      // Generate the PDF directly without appending to DOM
-      html2pdf().set(opt).from(element).save();
+      // Ensures browser completely loads the Mukta font before saving PDF
+      document.fonts.ready.then(() => {
+        const opt = {
+          margin: [8, 8, 8, 8],
+          filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
+          image: { type: 'jpeg', quality: 1.0 },
+          html2canvas: { 
+            scale: 3, // High scale for Sharp non-blurry fonts
+            useCORS: true, 
+            windowWidth: 1450,
+            letterRendering: false
+          },
+          jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+        };
+
+        html2pdf().set(opt).from(container).save().then(() => {
+          document.body.removeChild(container);
+        });
+      });
     }
 
-    // Excel Export with New Columns
+    // Excel Export
     function downloadExcel() {
       const period = getPeriod();
       const excelRows = [

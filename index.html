@@ -8,8 +8,8 @@
   <!-- Tailwind CSS & Lucide Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- html2pdf for full-border PDF export -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- html2pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <!-- SheetJS for Excel (.xlsx) Export -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -27,11 +27,17 @@
       background-color: #94a3b8;
       border-radius: 4px;
     }
+    /* Print Specific Styles */
     @media print {
+      @page {
+        size: landscape; /* Forces default landscape orientation */
+        margin: 10mm;
+      }
       .no-print { display: none !important; }
-      body { background: white !important; font-size: 12px; }
+      body { background: white !important; font-size: 11px; }
       table { border-collapse: collapse; width: 100%; border: 1px solid black !important; }
-      th, td { border: 1px solid black !important; padding: 6px !important; }
+      th, td { border: 1px solid black !important; padding: 6px !important; text-align: left; }
+      th { background-color: #f1f5f9 !important; -webkit-print-color-adjust: exact; }
     }
   </style>
 </head>
@@ -41,7 +47,6 @@
   <header class="bg-[#003366] text-white border-b-4 border-amber-500 shadow-md">
     <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 flex flex-wrap justify-between items-center gap-4">
       <div class="flex items-center gap-4">
-        <!-- Govt Style Emblem/Logo Placeholder -->
         <div class="w-12 h-12 bg-white rounded flex items-center justify-center font-black text-2xl text-[#003366] border-2 border-amber-500 shadow-sm">
           रा
         </div>
@@ -73,7 +78,7 @@
   </header>
 
   <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 flex-1 w-full space-y-6">
+  <main class="max-w-[95%] mx-auto px-4 py-6 sm:px-6 flex-1 w-full space-y-6">
     
     <!-- Top Filter Bar & Action Buttons -->
     <div class="bg-white p-4 rounded-md shadow-sm border border-slate-300 flex flex-wrap items-center justify-between gap-4">
@@ -81,7 +86,7 @@
         <!-- Search Input -->
         <div class="relative flex-1 sm:w-80">
           <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
-          <input type="text" id="searchInput" oninput="renderTable()" placeholder="शाळा, मदतनीस किंवा युडायस कोड शोधा..." 
+          <input type="text" id="searchInput" oninput="renderTable()" placeholder="शाळा, मदतनीस किंवा युडायस शोधा..." 
                  class="w-full pl-9 pr-4 py-2 text-sm rounded border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-colors">
         </div>
         
@@ -111,16 +116,16 @@
         </div>
       </div>
 
-      <!-- Action Buttons (Official Solid Colors) -->
+      <!-- Action Buttons -->
       <div class="flex flex-wrap items-center gap-2 no-print">
         <button onclick="openFormModal()" id="addNewBtn" class="hidden bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold items-center gap-1.5 shadow-sm transition-colors border border-blue-700">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i> नवीन नोंद जोडा
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> नवीन नोंद
         </button>
         <button onclick="downloadExcel()" class="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-green-800">
           <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Excel डाउनलोड
         </button>
         <button onclick="downloadPDF()" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-red-800">
-          <i data-lucide="file-down" class="w-4 h-4"></i> PDF मागणी पत्रक
+          <i data-lucide="file-down" class="w-4 h-4"></i> PDF पत्रक
         </button>
         <button onclick="window.print()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors border border-slate-800">
           <i data-lucide="printer" class="w-4 h-4"></i> प्रिंट
@@ -128,7 +133,7 @@
       </div>
     </div>
 
-    <!-- Summary Statistics (Clean Official Cards) -->
+    <!-- Summary Statistics -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 no-print">
       <div class="bg-white p-4 rounded-md border border-slate-200 border-t-4 border-t-blue-600 shadow-sm relative">
         <div class="text-xs font-bold text-slate-500 uppercase tracking-wider">एकूण शाळा गट</div>
@@ -155,20 +160,22 @@
     <!-- Live Data Table -->
     <div class="bg-white rounded-md shadow-sm border border-slate-300 overflow-hidden">
       <div class="overflow-x-auto custom-scroll">
-        <table class="w-full text-left text-sm border-collapse">
+        <table class="w-full text-left text-sm border-collapse whitespace-nowrap">
           <thead>
             <tr class="bg-slate-200 text-slate-800 font-bold border-b-2 border-slate-400 uppercase text-xs tracking-wider">
-              <th class="p-3 text-center border-r border-slate-300 w-12">अ.क्र.</th>
-              <th class="p-3 min-w-[200px] border-r border-slate-300">शाळेचे नाव</th>
-              <th class="p-3 w-28 text-center border-r border-slate-300">युडायस कोड</th>
-              <th class="p-3 text-center w-16 border-r border-slate-300">पट</th>
-              <th class="p-3 min-w-[190px] border-r border-slate-300">स्वयंपाकी / मदतनीस नाव</th>
-              <th class="p-3 min-w-[140px] border-r border-slate-300">बँकेचे नाव</th>
-              <th class="p-3 min-w-[140px] border-r border-slate-300">बँक खाते क्रमांक</th>
-              <th class="p-3 min-w-[120px] text-center border-r border-slate-300">IFSC कोड</th>
-              <th class="p-3 text-center w-24 border-r border-slate-300">माहे</th>
-              <th class="p-3 text-right w-24 border-r border-slate-300">मानधन</th>
-              <th class="p-3 text-center w-24 admin-col hidden no-print text-red-700">क्रिया</th>
+              <th class="p-3 text-center border-r border-slate-300">अ.क्र.</th>
+              <th class="p-3 border-r border-slate-300">शाळेचे नाव</th>
+              <th class="p-3 text-center border-r border-slate-300">युडायस कोड</th>
+              <th class="p-3 text-center border-r border-slate-300">पट</th>
+              <th class="p-3 border-r border-slate-300">स्वयंपाकी / मदतनीस नाव</th>
+              <th class="p-3 border-r border-slate-300">बँकेचे नाव</th>
+              <th class="p-3 border-r border-slate-300">बँक खाते क्रमांक</th>
+              <th class="p-3 text-center border-r border-slate-300">IFSC कोड</th>
+              <th class="p-3 text-center border-r border-slate-300">आरोग्य तपासणी</th>
+              <th class="p-3 text-center border-r border-slate-300">करारनामा</th>
+              <th class="p-3 text-center border-r border-slate-300">माहे</th>
+              <th class="p-3 text-right border-r border-slate-300">मानधन</th>
+              <th class="p-3 text-center admin-col hidden no-print text-red-700">क्रिया</th>
             </tr>
           </thead>
           <tbody id="tableBody" class="divide-y divide-slate-200">
@@ -176,7 +183,7 @@
           </tbody>
           <tfoot>
             <tr class="bg-slate-100 font-bold border-t-2 border-slate-400 text-slate-800">
-              <td colspan="9" class="p-3 text-right text-sm">एकूण मानधन देय:</td>
+              <td colspan="11" class="p-3 text-right text-sm">एकूण मानधन देय:</td>
               <td class="p-3 text-right text-base text-green-700 font-black border-l border-slate-300" id="totalHonorarium">0/-</td>
               <td class="admin-col hidden no-print border-l border-slate-300"></td>
             </tr>
@@ -252,9 +259,9 @@
     </div>
   </div>
 
-  <!-- Form Modal (Add / Edit Record) -->
+  <!-- Form Modal -->
   <div id="formModal" class="fixed inset-0 bg-slate-900/70 z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-    <div class="bg-white rounded-md max-w-xl w-full p-6 shadow-xl border border-slate-300 my-8">
+    <div class="bg-white rounded-md max-w-2xl w-full p-6 shadow-xl border border-slate-300 my-8">
       <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
         <h3 id="formModalTitle" class="text-lg font-bold text-[#003366] flex items-center gap-2">
           <i data-lucide="plus-circle" class="w-5 h-5"></i> नवीन नोंद जोडा
@@ -270,7 +277,6 @@
             <label class="block font-bold text-slate-700 mb-1">शाळेचे नाव निवडा (किंवा शेवटी मॅन्युअली जोडा) <span class="text-red-500">*</span></label>
             <select id="f_school_select" onchange="onSchoolSelectChange(this.value)" 
                     class="w-full px-3 py-2 border border-slate-300 rounded bg-slate-50 font-medium focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
-              <!-- Populated dynamically -->
             </select>
           </div>
 
@@ -300,7 +306,7 @@
 
           <div>
             <label class="block font-bold text-slate-700 mb-1">बँकेचे नाव <span class="text-red-500">*</span></label>
-            <input type="text" id="f_bank" required placeholder="उदा. SBI / BOI अंबाजोगाई" 
+            <input type="text" id="f_bank" required placeholder="उदा. SBI / BOI" 
                    class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
           </div>
 
@@ -315,8 +321,25 @@
             <input type="text" id="f_ifsc" required placeholder="उदा. SBIN0003403" 
                    class="w-full px-3 py-2 border border-slate-300 rounded font-mono uppercase focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
           </div>
+          
+          <!-- New fields -->
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">आरोग्य तपासणी झाली आहे? <span class="text-red-500">*</span></label>
+            <select id="f_health" required class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+              <option value="आहे">आहे</option>
+              <option value="नाही">नाही</option>
+            </select>
+          </div>
 
           <div>
+            <label class="block font-bold text-slate-700 mb-1">करारनामा केला आहे? <span class="text-red-500">*</span></label>
+            <select id="f_contract" required class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
+              <option value="आहे">आहे</option>
+              <option value="नाही">नाही</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2">
             <label class="block font-bold text-slate-700 mb-1">मानधन रक्कम (₹) <span class="text-red-500">*</span></label>
             <input type="number" id="f_amount" required value="2500" 
                    class="w-full px-3 py-2 border border-slate-300 rounded focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none font-bold text-green-700">
@@ -361,36 +384,36 @@
     let schoolDirectory = JSON.parse(localStorage.getItem('mdm_school_directory')) || initialSchoolDirectory;
 
     const defaultData = [
-      { id: 1, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चाटे सुंदराबाई दोंडीबा", bank: "SBI", acc: "34734735906", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 2, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चोरे जयश्री सिध्देश्वर", bank: "SBI", acc: "38701103558", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 3, school: "जि. प. प्रा. शा. तलाव पाटी", udise: "27270103401", roll: 15, name: "सौ. काळे वंदना सोनाप्पा", bank: "BOI अंबाजोगाई", acc: "075310110015269", ifsc: "BKID0000753", amount: 2500 },
-      { id: 4, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. १", udise: "27270102501", roll: 92, name: "सविता विलास जाधव", bank: "BOI अंबाजोगाई", acc: "075310110010761", ifsc: "BKID0000753", amount: 2500 },
-      { id: 5, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. ३", udise: "27270102502", roll: 4, name: "कविता बालासाहेब राठोड", bank: "बँक ऑफ इंडिया", acc: "075321110000036", ifsc: "BKID0000753", amount: 2500 },
-      { id: 6, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. २", udise: "27270102601", roll: 16, name: "विमल बालासाहेब राठोड", bank: "SBI", acc: "32514706628", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 7, school: "जि. प. प्रा. शा. अंबलवाडी", udise: "27270103501", roll: 42, name: "श्रीम. गंगाबाई किसन गर्जे", bank: "BOI", acc: "075310110004662", ifsc: "BKID000763", amount: 2500 },
-      { id: 8, school: "जि. प. प्रा. शा. अंबलवाडी", udise: "27270103501", roll: 42, name: "श्रीम. वंदना रंभाजी दहिवडे", bank: "SBI", acc: "32548030784", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 9, school: "जि. प. प्रा. शा. मांडवा पठाण", udise: "27270102701", roll: 67, name: "श्रीम. जाधव सुमन अच्युतराव", bank: "बँक ऑफ बडोदा", acc: "09880100001050", ifsc: "BARBOAMBBI", amount: 2500 },
-      { id: 10, school: "जि. प. प्रा. शा. मांडवा पठाण", udise: "27270102701", roll: 67, name: "श्रीम. जोगदंड तुळसाबाई यशवंत", bank: "SBI", acc: "32581833227", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 11, school: "जि. प. हा. स्कू. गिरवली", udise: "27270103801", roll: 15, name: "लक्ष्मी अशोक सुरवसे", bank: "BOI अंबाजोगाई", acc: "075318210002407", ifsc: "BKID0000753", amount: 2500 },
-      { id: 12, school: "जि. प. हा. स्कू. गिरवली", udise: "27270103801", roll: 15, name: "अशोक तुकाराम सुरवसे", bank: "BOI अंबाजोगाई", acc: "075318210002387", ifsc: "BKID0000753", amount: 2500 },
-      { id: 13, school: "जि. प. प्रा. शा. गोल्टावस्ती", udise: "27270103502", roll: 11, name: "सौ. लिंबाबाई यशवंत गर्जे", bank: "बँक ऑफ इंडिया", acc: "075310110010632", ifsc: "BKID0000753", amount: 2500 },
-      { id: 14, school: "जि. प. प्रा. शा. गिरवली आपेट", udise: "27270103701", roll: 17, name: "श्री. तानाजी प्रभू पारधे", bank: "BOI अंबाजोगाई", acc: "075318210000793", ifsc: "BKID0000753", amount: 2500 },
-      { id: 15, school: "जि. प. प्रा. शा. सह्याद्री नगर शेपवाडी", udise: "27270103102", roll: 17, name: "श्रीम. चोपणे मनीषा संजयकुमार", bank: "बँक ऑफ इंडिया", acc: "075318210012108", ifsc: "BKID0000753", amount: 2500 },
-      { id: 16, school: "जि. प. प्रा. शा. पोलेवाडी", udise: "27270102901", roll: 13, name: "कांबळे लक्ष्मीबाई देविदास", bank: "SBI", acc: "32547239007", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 17, school: "जि. प. प्रा. शा. भीमाई वस्ती", udise: "27270102503", roll: 31, name: "श्रीम. जयश्री चंद्रकांत गिरी", bank: "बँक ऑफ बडोदा", acc: "09880100001952", ifsc: "BARBOAMBBHI", amount: 2500 },
-      { id: 18, school: "जि. प. प्रा. शा. भीमाई वस्ती", udise: "27270102503", roll: 31, name: "सौ. तृप्ती गोविंद गिरी", bank: "SBI", acc: "36195603566", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 19, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्रीम. सुनंदा निवृत्ती चाटे", bank: "BOI अंबाजोगाई", acc: "075310110007251", ifsc: "BKID0000753", amount: 2500 },
-      { id: 20, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्री. सुरेश देवराव चाटे", bank: "SBI अंबाजोगाई", acc: "35848099868", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 21, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्रीम. सुशिला मोहन वेडे", bank: "SBI अंबाजोगाई", acc: "34668008985", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 22, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "फरजानाबी खादर पठाण", bank: "SBI अंबाजोगाई", acc: "32532755303", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 23, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "हसन पठाण कादर", bank: "SBI अंबाजोगाई", acc: "11369927365", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 24, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "महेताब पठाण गुलाम", bank: "बँक ऑफ महाराष्ट्र", acc: "60322617454", ifsc: "MAHB0000037", amount: 2500 },
-      { id: 25, school: "जि. प. प्रा. शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203", roll: 67, name: "श्रीम. शेख कुलसुम शेख नुर", bank: "SBI अंबाजोगाई", acc: "32670103710", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 26, school: "जि. प. प्रा. शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203", roll: 67, name: "शेख शाकेर शेख नुर", bank: "बँक ऑफ बडोदा", acc: "09880100018530", ifsc: "BARBOAMBBHI", amount: 2500 },
-      { id: 27, school: "जि. प. प्रा. शा. मांडवा तांडा", udise: "27270102801", roll: 14, name: "श्रीम. उषा श्रीराम मन्नाडे", bank: "BOI अंबाजोगाई", acc: "075310110001630", ifsc: "BKID0000753", amount: 2500 },
-      { id: 28, school: "जि. प. प्रा. शा. उघडे वस्ती (वरवटी)", udise: "27270103303", roll: 26, name: "सौ. उघडे संगिता पंडीतराव", bank: "SBI अंबाजोगाई", acc: "36742002928", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 29, school: "जि. प. प्रा. शा. नागझरी वसाहत", udise: "27270103001", roll: 34, name: "डावरे शोभा उत्तरेश्वर", bank: "SBI", acc: "35710327511", ifsc: "SBIN0003403", amount: 2500 },
-      { id: 30, school: "जि. प. प्रा. शा. नागझरी वसाहत", udise: "27270103001", roll: 34, name: "डावरे श्वेता उत्तरेश्वर", bank: "SBI", acc: "32460199966", ifsc: "SBIN0003403", amount: 2500 }
+      { id: 1, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चाटे सुंदराबाई दोंडीबा", bank: "SBI", acc: "34734735906", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 2, school: "जि. प. प्रा. शाळा वरवटी", udise: "27270103301", roll: 44, name: "श्रीमती चोरे जयश्री सिध्देश्वर", bank: "SBI", acc: "38701103558", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 3, school: "जि. प. प्रा. शा. तलाव पाटी", udise: "27270103401", roll: 15, name: "सौ. काळे वंदना सोनाप्पा", bank: "BOI अंबाजोगाई", acc: "075310110015269", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 4, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. १", udise: "27270102501", roll: 92, name: "सविता विलास जाधव", bank: "BOI अंबाजोगाई", acc: "075310110010761", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 5, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. ३", udise: "27270102502", roll: 4, name: "कविता बालासाहेब राठोड", bank: "बँक ऑफ इंडिया", acc: "075321110000036", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 6, school: "जि. प. प्रा. शा. काळवटी तांडा क्र. २", udise: "27270102601", roll: 16, name: "विमल बालासाहेब राठोड", bank: "SBI", acc: "32514706628", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 7, school: "जि. प. प्रा. शा. अंबलवाडी", udise: "27270103501", roll: 42, name: "श्रीम. गंगाबाई किसन गर्जे", bank: "BOI", acc: "075310110004662", ifsc: "BKID000763", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 8, school: "जि. प. प्रा. शा. अंबलवाडी", udise: "27270103501", roll: 42, name: "श्रीम. वंदना रंभाजी दहिवडे", bank: "SBI", acc: "32548030784", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 9, school: "जि. प. प्रा. शा. मांडवा पठाण", udise: "27270102701", roll: 67, name: "श्रीम. जाधव सुमन अच्युतराव", bank: "बँक ऑफ बडोदा", acc: "09880100001050", ifsc: "BARBOAMBBI", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 10, school: "जि. प. प्रा. शा. मांडवा पठाण", udise: "27270102701", roll: 67, name: "श्रीम. जोगदंड तुळसाबाई यशवंत", bank: "SBI", acc: "32581833227", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 11, school: "जि. प. हा. स्कू. गिरवली", udise: "27270103801", roll: 15, name: "लक्ष्मी अशोक सुरवसे", bank: "BOI अंबाजोगाई", acc: "075318210002407", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 12, school: "जि. प. हा. स्कू. गिरवली", udise: "27270103801", roll: 15, name: "अशोक तुकाराम सुरवसे", bank: "BOI अंबाजोगाई", acc: "075318210002387", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 13, school: "जि. प. प्रा. शा. गोल्टावस्ती", udise: "27270103502", roll: 11, name: "सौ. लिंबाबाई यशवंत गर्जे", bank: "बँक ऑफ इंडिया", acc: "075310110010632", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 14, school: "जि. प. प्रा. शा. गिरवली आपेट", udise: "27270103701", roll: 17, name: "श्री. तानाजी प्रभू पारधे", bank: "BOI अंबाजोगाई", acc: "075318210000793", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 15, school: "जि. प. प्रा. शा. सह्याद्री नगर शेपवाडी", udise: "27270103102", roll: 17, name: "श्रीम. चोपणे मनीषा संजयकुमार", bank: "बँक ऑफ इंडिया", acc: "075318210012108", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 16, school: "जि. प. प्रा. शा. पोलेवाडी", udise: "27270102901", roll: 13, name: "कांबळे लक्ष्मीबाई देविदास", bank: "SBI", acc: "32547239007", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 17, school: "जि. प. प्रा. शा. भीमाई वस्ती", udise: "27270102503", roll: 31, name: "श्रीम. जयश्री चंद्रकांत गिरी", bank: "बँक ऑफ बडोदा", acc: "09880100001952", ifsc: "BARBOAMBBHI", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 18, school: "जि. प. प्रा. शा. भीमाई वस्ती", udise: "27270102503", roll: 31, name: "सौ. तृप्ती गोविंद गिरी", bank: "SBI", acc: "36195603566", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 19, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्रीम. सुनंदा निवृत्ती चाटे", bank: "BOI अंबाजोगाई", acc: "075310110007251", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 20, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्री. सुरेश देवराव चाटे", bank: "SBI अंबाजोगाई", acc: "35848099868", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 21, school: "जि. प. प्रा. शा. साकुड (मराठी)", udise: "27270102401", roll: 270, name: "श्रीम. सुशिला मोहन वेडे", bank: "SBI अंबाजोगाई", acc: "34668008985", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 22, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "फरजानाबी खादर पठाण", bank: "SBI अंबाजोगाई", acc: "32532755303", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 23, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "हसन पठाण कादर", bank: "SBI अंबाजोगाई", acc: "11369927365", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 24, school: "जि. प. प्रा. शा. साकुड (उर्दू)", udise: "27270102404", roll: 257, name: "महेताब पठाण गुलाम", bank: "बँक ऑफ महाराष्ट्र", acc: "60322617454", ifsc: "MAHB0000037", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 25, school: "जि. प. प्रा. शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203", roll: 67, name: "श्रीम. शेख कुलसुम शेख नुर", bank: "SBI अंबाजोगाई", acc: "32670103710", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 26, school: "जि. प. प्रा. शा. पिंपळा धायगुडा (उर्दू)", udise: "27270103203", roll: 67, name: "शेख शाकेर शेख नुर", bank: "बँक ऑफ बडोदा", acc: "09880100018530", ifsc: "BARBOAMBBHI", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 27, school: "जि. प. प्रा. शा. मांडवा तांडा", udise: "27270102801", roll: 14, name: "श्रीम. उषा श्रीराम मन्नाडे", bank: "BOI अंबाजोगाई", acc: "075310110001630", ifsc: "BKID0000753", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 28, school: "जि. प. प्रा. शा. उघडे वस्ती (वरवटी)", udise: "27270103303", roll: 26, name: "सौ. उघडे संगिता पंडीतराव", bank: "SBI अंबाजोगाई", acc: "36742002928", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 29, school: "जि. प. प्रा. शा. नागझरी वसाहत", udise: "27270103001", roll: 34, name: "डावरे शोभा उत्तरेश्वर", bank: "SBI", acc: "35710327511", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 },
+      { id: 30, school: "जि. प. प्रा. शा. नागझरी वसाहत", udise: "27270103001", roll: 34, name: "डावरे श्वेता उत्तरेश्वर", bank: "SBI", acc: "32460199966", ifsc: "SBIN0003403", health: "आहे", contract: "आहे", amount: 2500 }
     ];
 
     let records = JSON.parse(localStorage.getItem('mdm_portal_records')) || defaultData;
@@ -400,44 +423,28 @@
     function populateSchoolDropdown() {
       const select = document.getElementById('f_school_select');
       select.innerHTML = '<option value="">-- शाळा निवडा --</option>';
-      
       schoolDirectory.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.udise;
-        opt.textContent = `${s.name} (${s.udise})`;
+        opt.value = s.udise; opt.textContent = `${s.name} (${s.udise})`;
         select.appendChild(opt);
       });
-
       const manualOpt = document.createElement('option');
-      manualOpt.value = "__MANUAL__";
-      manualOpt.textContent = "➕ इतर / नवीन शाळा जोडा (Manual Entry)";
-      manualOpt.className = "font-bold text-blue-700 bg-blue-50";
-      select.appendChild(manualOpt);
+      manualOpt.value = "__MANUAL__"; manualOpt.textContent = "➕ इतर / नवीन शाळा जोडा (Manual Entry)";
+      manualOpt.className = "font-bold text-blue-700 bg-blue-50"; select.appendChild(manualOpt);
     }
 
     function onSchoolSelectChange(selectedVal) {
       if (!selectedVal) return;
-      
       if (selectedVal === "__MANUAL__") {
-        document.getElementById('f_school').value = '';
-        document.getElementById('f_udise').value = '';
-        document.getElementById('f_school').focus();
+        document.getElementById('f_school').value = ''; document.getElementById('f_udise').value = ''; document.getElementById('f_school').focus();
       } else {
         const found = schoolDirectory.find(s => s.udise === selectedVal);
-        if (found) {
-          document.getElementById('f_school').value = found.name;
-          document.getElementById('f_udise').value = found.udise;
-        }
+        if (found) { document.getElementById('f_school').value = found.name; document.getElementById('f_udise').value = found.udise; }
       }
     }
 
-    function getPeriod() {
-      return `${document.getElementById('monthSelect').value} ${document.getElementById('yearSelect').value}`;
-    }
-
-    function updatePeriod() {
-      renderTable();
-    }
+    function getPeriod() { return `${document.getElementById('monthSelect').value} ${document.getElementById('yearSelect').value}`; }
+    function updatePeriod() { renderTable(); }
 
     function toggleAdminModal() {
       if (isAdmin) {
@@ -446,21 +453,16 @@
         document.getElementById('adminIndicator').classList.add('hidden');
         document.getElementById('settingsBtn').classList.add('hidden');
         document.getElementById('addNewBtn').classList.add('hidden');
-        document.querySelectorAll('.admin-col').forEach(c => c.classList.add('hidden'));
-        renderTable();
-        return;
+        renderTable(); return;
       }
-      const modal = document.getElementById('pinModal');
-      modal.classList.toggle('hidden');
-      if (!modal.classList.contains('hidden')) {
-        document.getElementById('adminPin').value = '';
-        document.getElementById('adminPin').focus();
+      document.getElementById('pinModal').classList.toggle('hidden');
+      if (!document.getElementById('pinModal').classList.contains('hidden')) {
+        document.getElementById('adminPin').value = ''; document.getElementById('adminPin').focus();
       }
     }
 
     function verifyPin() {
-      const pin = document.getElementById('adminPin').value;
-      if (pin === currentAdminPin) {
+      if (document.getElementById('adminPin').value === currentAdminPin) {
         isAdmin = true;
         document.getElementById('adminBtnText').textContent = "लॉगआउट";
         document.getElementById('adminIndicator').classList.remove('hidden');
@@ -468,31 +470,17 @@
         document.getElementById('addNewBtn').classList.remove('hidden');
         document.getElementById('pinModal').classList.add('hidden');
         renderTable();
-      } else {
-        alert("चुकीचा पिन! कृपया बरोबर पिन प्रविष्ट करा.");
-      }
+      } else { alert("चुकीचा पिन! कृपया बरोबर पिन प्रविष्ट करा."); }
     }
 
-    function openAdminSettings() {
-      if (!isAdmin) return;
-      document.getElementById('settingsModal').classList.remove('hidden');
-    }
-
-    function closeAdminSettings() {
-      document.getElementById('settingsModal').classList.add('hidden');
-    }
-
+    function openAdminSettings() { if(isAdmin) document.getElementById('settingsModal').classList.remove('hidden'); }
+    function closeAdminSettings() { document.getElementById('settingsModal').classList.add('hidden'); }
     function updatePin() {
       const newPin = document.getElementById('newPinInput').value.trim();
       if (newPin.length === 4 && !isNaN(newPin)) {
-        currentAdminPin = newPin;
-        localStorage.setItem('mdm_portal_pin', newPin);
-        alert("पिन यशस्वीरित्या बदलला आहे!");
-        document.getElementById('newPinInput').value = '';
-        closeAdminSettings();
-      } else {
-        alert("कृपया वैध ४ अंकी संख्या पिन टाका.");
-      }
+        currentAdminPin = newPin; localStorage.setItem('mdm_portal_pin', newPin);
+        alert("पिन यशस्वीरित्या बदलला आहे!"); document.getElementById('newPinInput').value = ''; closeAdminSettings();
+      } else { alert("कृपया वैध ४ अंकी संख्या पिन टाका."); }
     }
 
     function renderTable() {
@@ -500,23 +488,18 @@
       const currentPeriod = getPeriod();
       const tbody = document.getElementById('tableBody');
       tbody.innerHTML = '';
-
+      
       const filtered = records.filter(r => 
-        r.school.toLowerCase().includes(query) || 
-        r.udise.includes(query) || 
-        r.name.toLowerCase().includes(query) ||
-        r.bank.toLowerCase().includes(query)
+        r.school.toLowerCase().includes(query) || r.udise.includes(query) || r.name.toLowerCase().includes(query)
       );
 
-      let totalRoll = 0;
-      let totalAmount = 0;
+      let totalRoll = 0, totalAmount = 0;
       const uniqueSchools = new Set();
 
       filtered.forEach((r, idx) => {
-        totalRoll += Number(r.roll) || 0;
-        totalAmount += Number(r.amount) || 0;
-        uniqueSchools.add(r.udise);
-
+        totalRoll += Number(r.roll) || 0; totalAmount += Number(r.amount) || 0; uniqueSchools.add(r.udise);
+        const health = r.health || 'आहे'; const contract = r.contract || 'आहे';
+        
         const tr = document.createElement('tr');
         tr.className = "hover:bg-slate-50 transition-colors";
         tr.innerHTML = `
@@ -528,18 +511,14 @@
           <td class="p-3 text-slate-700 border-r border-slate-200">${r.bank}</td>
           <td class="p-3 font-mono text-slate-800 border-r border-slate-200">${r.acc}</td>
           <td class="p-3 font-mono text-center text-slate-600 border-r border-slate-200 uppercase">${r.ifsc}</td>
-          <td class="p-3 text-center border-r border-slate-200">
-            <span class="text-slate-800 font-bold">${currentPeriod}</span>
-          </td>
+          <td class="p-3 text-center border-r border-slate-200 font-bold ${health === 'आहे' ? 'text-green-600' : 'text-red-600'}">${health}</td>
+          <td class="p-3 text-center border-r border-slate-200 font-bold ${contract === 'आहे' ? 'text-green-600' : 'text-red-600'}">${contract}</td>
+          <td class="p-3 text-center border-r border-slate-200 font-bold">${currentPeriod}</td>
           <td class="p-3 text-right font-black text-green-700 border-r border-slate-200">₹ ${r.amount}/-</td>
           <td class="p-3 text-center admin-col ${isAdmin ? '' : 'hidden'} no-print">
             <div class="flex items-center justify-center gap-2">
-              <button onclick="editRecordPrompt(${r.id})" class="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-1.5 rounded transition" title="संपादन">
-                <i data-lucide="pencil" class="w-4 h-4"></i>
-              </button>
-              <button onclick="deleteRow(${r.id})" class="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 p-1.5 rounded transition" title="डिलीट">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
+              <button onclick="editRecordPrompt(${r.id})" class="text-blue-600 bg-blue-50 p-1.5 rounded" title="संपादन"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+              <button onclick="deleteRow(${r.id})" class="text-red-600 bg-red-50 p-1.5 rounded" title="डिलीट"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
           </td>
         `;
@@ -551,14 +530,11 @@
       document.getElementById('statRoll').textContent = totalRoll;
       document.getElementById('statAmount').textContent = `₹ ${totalAmount.toLocaleString('en-IN')}/-`;
       document.getElementById('totalHonorarium').textContent = `₹ ${totalAmount.toLocaleString('en-IN')}/-`;
-
       lucide.createIcons();
     }
 
     function openFormModal(editData = null) {
-      document.getElementById('formModal').classList.remove('hidden');
-      populateSchoolDropdown();
-
+      document.getElementById('formModal').classList.remove('hidden'); populateSchoolDropdown();
       if (editData) {
         document.getElementById('formModalTitle').innerHTML = `<i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i> माहिती संपादन करा`;
         document.getElementById('editRecordId').value = editData.id;
@@ -570,20 +546,17 @@
         document.getElementById('f_bank').value = editData.bank;
         document.getElementById('f_acc').value = editData.acc;
         document.getElementById('f_ifsc').value = editData.ifsc;
+        document.getElementById('f_health').value = editData.health || 'आहे';
+        document.getElementById('f_contract').value = editData.contract || 'आहे';
         document.getElementById('f_amount').value = editData.amount;
       } else {
         document.getElementById('formModalTitle').innerHTML = `<i data-lucide="plus-circle" class="w-5 h-5 text-[#003366]"></i> नवीन नोंद जोडा`;
-        document.getElementById('recordForm').reset();
-        document.getElementById('editRecordId').value = '';
-        document.getElementById('f_school_select').value = '';
+        document.getElementById('recordForm').reset(); document.getElementById('editRecordId').value = '';
         document.getElementById('f_amount').value = '2500';
       }
-      lucide.createIcons();
     }
 
-    function closeFormModal() {
-      document.getElementById('formModal').classList.add('hidden');
-    }
+    function closeFormModal() { document.getElementById('formModal').classList.add('hidden'); }
 
     function saveRecord(e) {
       e.preventDefault();
@@ -593,103 +566,69 @@
 
       const exists = schoolDirectory.some(s => s.udise === schoolUdise || s.name === schoolName);
       if (!exists && schoolName && schoolUdise) {
-        schoolDirectory.push({ name: schoolName, udise: schoolUdise });
-        localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
+        schoolDirectory.push({ name: schoolName, udise: schoolUdise }); localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
       }
 
       const payload = {
         id: id ? Number(id) : Date.now(),
-        school: schoolName,
-        udise: schoolUdise,
-        roll: Number(document.getElementById('f_roll').value),
-        name: document.getElementById('f_name').value.trim(),
-        bank: document.getElementById('f_bank').value.trim(),
-        acc: document.getElementById('f_acc').value.trim(),
-        ifsc: document.getElementById('f_ifsc').value.trim().toUpperCase(),
+        school: schoolName, udise: schoolUdise, roll: Number(document.getElementById('f_roll').value),
+        name: document.getElementById('f_name').value.trim(), bank: document.getElementById('f_bank').value.trim(),
+        acc: document.getElementById('f_acc').value.trim(), ifsc: document.getElementById('f_ifsc').value.trim().toUpperCase(),
+        health: document.getElementById('f_health').value, contract: document.getElementById('f_contract').value,
         amount: Number(document.getElementById('f_amount').value) || 2500
       };
 
-      if (id) {
-        records = records.map(r => r.id === Number(id) ? payload : r);
-      } else {
-        records.unshift(payload);
-      }
+      if (id) { records = records.map(r => r.id === Number(id) ? payload : r); } 
+      else { records.unshift(payload); }
 
-      localStorage.setItem('mdm_portal_records', JSON.stringify(records));
-      closeFormModal();
-      renderTable();
+      localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeFormModal(); renderTable();
     }
 
-    function editRecordPrompt(id) {
-      if (!isAdmin) return;
-      const rec = records.find(r => r.id === id);
-      if (rec) openFormModal(rec);
-    }
-
+    function editRecordPrompt(id) { if (!isAdmin) return; const rec = records.find(r => r.id === id); if (rec) openFormModal(rec); }
     function deleteRow(id) {
-      if (!isAdmin) return;
-      const item = records.find(r => r.id === id);
+      if (!isAdmin) return; const item = records.find(r => r.id === id);
       if (confirm(`तुम्हाला "${item ? item.name : 'ही नोंद'}" डिलीट करायची आहे का?`)) {
-        records = records.filter(r => r.id !== id);
-        localStorage.setItem('mdm_portal_records', JSON.stringify(records));
-        renderTable();
+        records = records.filter(r => r.id !== id); localStorage.setItem('mdm_portal_records', JSON.stringify(records)); renderTable();
       }
     }
 
     function resetToDefaultData() {
       if (!isAdmin) return;
       if (confirm("मूळ माहिती पूर्ववत करायची आहे का? नवीन केलेले सर्व बदल नष्ट होतील.")) {
-        records = JSON.parse(JSON.stringify(defaultData));
-        schoolDirectory = JSON.parse(JSON.stringify(initialSchoolDirectory));
-        localStorage.setItem('mdm_portal_records', JSON.stringify(records));
-        localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
-        closeAdminSettings();
-        renderTable();
+        records = JSON.parse(JSON.stringify(defaultData)); schoolDirectory = JSON.parse(JSON.stringify(initialSchoolDirectory));
+        localStorage.setItem('mdm_portal_records', JSON.stringify(records)); localStorage.setItem('mdm_school_directory', JSON.stringify(schoolDirectory));
+        closeAdminSettings(); renderTable();
       }
     }
-
     function clearAllData() {
       if (!isAdmin) return;
       if (confirm("सावधान! सर्व शाळा आणि कर्मचाऱ्यांची माहिती डिलीट करायची आहे का?")) {
-        records = [];
-        localStorage.setItem('mdm_portal_records', JSON.stringify(records));
-        closeAdminSettings();
-        renderTable();
+        records = []; localStorage.setItem('mdm_portal_records', JSON.stringify(records)); closeAdminSettings(); renderTable();
       }
     }
 
-    // Advanced PDF Export ensuring Mukta 20px font and official layout
+    // Completely Refactored, Bug-Free PDF Exporter
     function downloadPDF() {
       const period = getPeriod();
       const totalAmt = records.reduce((s, r) => s + Number(r.amount || 0), 0);
       
-      const container = document.createElement('div');
-      container.id = 'pdfExportContainer';
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      
-      container.innerHTML = `
-        <div style="padding: 20px; font-family: 'Mukta', sans-serif; color: #000; width: 1400px; background: #fff;">
+      // Creating the HTML string directly to avoid DOM manipulation bugs
+      const htmlString = `
+        <div style="padding: 20px; font-family: 'Mukta', sans-serif; color: #000; width: 1450px; background: #fff;">
           <style>
-            @import url('https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;700;800&display=swap');
-            /* Enforce Mukta 20px for absolutely everything in the PDF */
             .pdf-container, .pdf-table th, .pdf-table td {
                 font-family: 'Mukta', sans-serif !important;
                 font-size: 20px !important;
             }
             .pdf-table { width: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: fixed; }
             .pdf-table th, .pdf-table td { 
-                border: 2px solid #000; 
-                padding: 10px 8px; 
-                text-align: left; 
-                word-wrap: break-word; 
-                overflow-wrap: break-word;
+                border: 2px solid #000; padding: 10px 8px; text-align: left; 
+                word-wrap: break-word; overflow-wrap: break-word;
             }
             .pdf-table th { background-color: #e2e8f0; font-weight: 700; text-align: center; }
             .pdf-header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
-            .pdf-header h1 { font-size: 26px !important; font-weight: 800; margin: 0; font-family: 'Mukta', sans-serif !important; }
-            .pdf-header p { font-size: 20px !important; font-weight: 600; margin: 6px 0 0 0; font-family: 'Mukta', sans-serif !important; }
+            .pdf-header h1 { font-size: 26px !important; font-weight: 800; margin: 0; }
+            .pdf-header p { font-size: 20px !important; font-weight: 600; margin: 6px 0 0 0; }
             .text-center { text-align: center !important; }
             .text-right { text-align: right !important; }
             .font-bold { font-weight: 700 !important; }
@@ -704,15 +643,18 @@
             <table class="pdf-table">
               <thead>
                 <tr>
-                  <th style="width: 4%;">अ.क्र.</th>
-                  <th style="width: 17%;">शाळेचे नाव</th>
-                  <th style="width: 11%;">युडायस कोड</th>
-                  <th style="width: 5%;">पट</th>
-                  <th style="width: 19%;">स्वयंपाकी / मदतनीस नाव</th>
-                  <th style="width: 12%;">बँकेचे नाव</th>
-                  <th style="width: 14%;">बँक खाते क्रमांक</th>
-                  <th style="width: 10%;">IFSC कोड</th>
-                  <th style="width: 8%;">माहे</th>
+                  <th style="width: 3.5%;">अ.क्र.</th>
+                  <th style="width: 14%;">शाळेचे नाव</th>
+                  <th style="width: 9%;">युडायस</th>
+                  <th style="width: 4%;">पट</th>
+                  <th style="width: 15%;">स्वयंपाकी / मदतनीस नाव</th>
+                  <th style="width: 9%;">बँकेचे नाव</th>
+                  <th style="width: 13%;">खाते क्रमांक</th>
+                  <th style="width: 9%;">IFSC कोड</th>
+                  <th style="width: 6.5%;">आरोग्य तपासणी</th>
+                  <th style="width: 6.5%;">करारनामा</th>
+                  <th style="width: 5%;">माहे</th>
+                  <th style="width: 5.5%;">मानधन</th>
                 </tr>
               </thead>
               <tbody>
@@ -725,15 +667,18 @@
                     <td class="font-bold">${r.name}</td>
                     <td>${r.bank}</td>
                     <td>${r.acc}</td>
-                    <td class="text-center uppercase">${r.ifsc}</td>
+                    <td class="text-center">${r.ifsc}</td>
+                    <td class="text-center font-bold">${r.health || 'आहे'}</td>
+                    <td class="text-center font-bold">${r.contract || 'आहे'}</td>
                     <td class="text-center">${period}</td>
+                    <td class="text-right font-bold">${r.amount}</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
                 <tr style="background-color: #f1f5f9; page-break-inside: avoid;">
-                  <td colspan="7" class="text-right font-bold">एकूण मानधन देय (₹ 2500 x ${records.length}):</td>
-                  <td colspan="2" class="text-right font-bold" style="color: #047857;">₹ ${totalAmt.toLocaleString('en-IN')}/-</td>
+                  <td colspan="11" class="text-right font-bold">एकूण मानधन देय (₹ 2500 x ${records.length}):</td>
+                  <td class="text-right font-bold" style="color: #047857;">₹ ${totalAmt.toLocaleString('en-IN')}/-</td>
                 </tr>
               </tfoot>
             </table>
@@ -741,73 +686,49 @@
         </div>
       `;
 
-      document.body.appendChild(container);
+      const element = document.createElement('div');
+      element.innerHTML = htmlString;
+      
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1450, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+      };
 
-      document.fonts.ready.then(() => {
-        html2pdf().from(container).set({
-          margin: [10, 10, 10, 10],
-          filename: `MDM_Report_Ravivar_Peth_${period.replace(/\s+/g, '_')}.pdf`,
-          image: { type: 'jpeg', quality: 1 },
-          html2canvas: { scale: 2, useCORS: true, windowWidth: 1400 },
-          jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
-        }).save().then(() => {
-          document.body.removeChild(container);
-        });
-      });
+      // Generate the PDF directly without appending to DOM
+      html2pdf().set(opt).from(element).save();
     }
 
-    // Direct Excel (.xlsx) Export
+    // Excel Export with New Columns
     function downloadExcel() {
       const period = getPeriod();
       const excelRows = [
         ["स्वयंपाकी / मदतनीस शालेय पोषण आहार मानधन मागणी पत्रक"],
         [`केंद्र: रविवारपेठ, ता. अंबाजोगाई, जि. बीड (माहे: ${period})`],
         [],
-        ["अ.क्र.", "शाळेचे नाव", "युडायस कोड", "पटसंख्या", "स्वयंपाकी / मदतनीस नाव", "बँकेचे नाव", "बँक खाते क्रमांक", "IFSC कोड", "माहे", "मानधन (₹)"]
+        ["अ.क्र.", "शाळेचे नाव", "युडायस कोड", "पटसंख्या", "स्वयंपाकी / मदतनीस नाव", "बँकेचे नाव", "बँक खाते क्रमांक", "IFSC कोड", "आरोग्य तपासणी", "करारनामा", "माहे", "मानधन (₹)"]
       ];
 
       records.forEach((r, idx) => {
         excelRows.push([
-          idx + 1,
-          r.school,
-          r.udise,
-          r.roll,
-          r.name,
-          r.bank,
-          r.acc,
-          r.ifsc,
-          period,
-          r.amount
+          idx + 1, r.school, r.udise, r.roll, r.name, r.bank, r.acc, r.ifsc, 
+          r.health || 'आहे', r.contract || 'आहे', period, r.amount
         ]);
       });
 
       const totalAmt = records.reduce((s, r) => s + Number(r.amount || 0), 0);
-      excelRows.push(["", "", "", "", "", "", "", "", "एकूण मानधन:", totalAmt]);
+      excelRows.push(["", "", "", "", "", "", "", "", "", "", "एकूण मानधन:", totalAmt]);
 
       const ws = XLSX.utils.aoa_to_sheet(excelRows);
-      ws['!cols'] = [
-        { wch: 6 },
-        { wch: 32 },
-        { wch: 16 },
-        { wch: 8 },
-        { wch: 28 },
-        { wch: 18 },
-        { wch: 20 },
-        { wch: 14 },
-        { wch: 14 },
-        { wch: 12 }
-      ];
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "MDM Report");
+      ws['!cols'] = [{wch: 6}, {wch: 32}, {wch: 14}, {wch: 8}, {wch: 28}, {wch: 16}, {wch: 20}, {wch: 14}, {wch: 14}, {wch: 12}, {wch: 12}, {wch: 12}];
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "MDM Report");
       XLSX.writeFile(wb, `MDM_Demand_${period.replace(/\s+/g, '_')}.xlsx`);
     }
 
-    // Initialize application
     window.addEventListener('DOMContentLoaded', () => {
-      populateSchoolDropdown();
-      updatePeriod();
-      lucide.createIcons();
+      populateSchoolDropdown(); updatePeriod(); lucide.createIcons();
     });
   </script>
 </body>
